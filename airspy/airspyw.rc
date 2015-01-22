@@ -27,15 +27,18 @@ STYLE DS_SHELLFONT | WS_CAPTION | WS_SYSMENU
 CAPTION "AIRSPY"
 FONT 8, "Ms Shell Dlg", 0, 0, 1
 {
+    LTEXT           "0", IDC_ST_IF_GAIN_VAL, 40, 11, 12, 12, SS_LEFT | SS_CENTERIMAGE, WS_EX_RIGHT
+    LTEXT           "0", IDC_ST_MIXER_GAIN_VAL, 40, 38, 12, 12, SS_LEFT | SS_CENTERIMAGE, WS_EX_RIGHT
+    LTEXT           "0", IDC_ST_LNA_GAIN_VAL, 40, 63, 12, 12, SS_LEFT | SS_CENTERIMAGE, WS_EX_RIGHT
     GROUPBOX        "", 0, 221, 4, 133, 78, 0, WS_EX_LEFT
     AUTOCHECKBOX    "Auto", IDCB_AUTO_MIXER_GAIN, 180, 39, 31, 8, 0, WS_EX_LEFT
     AUTOCHECKBOX    "Auto", IDCB_AUTO_LNA_GAIN, 180, 66, 31, 8, 0, WS_EX_LEFT
     AUTOCHECKBOX    "Bias-Tee option: 4.5v @ 50mA", IDCB_BIAS_TEE, 237, 66, 113, 8, 0, WS_EX_LEFT
-    CONTROL         "", IDS_IF_GAIN, TRACKBAR_CLASS, WS_TABSTOP | TBS_AUTOTICKS | TBS_BOTH, 45, 5, 132, 20, WS_EX_LEFT
-    CONTROL         "", IDS_MIXER_GAIN, TRACKBAR_CLASS, WS_TABSTOP | TBS_AUTOTICKS | TBS_BOTH, 45, 31, 132, 20, WS_EX_LEFT
-    CONTROL         "", IDS_LNA_GAIN, TRACKBAR_CLASS, WS_TABSTOP | TBS_AUTOTICKS | TBS_BOTH, 45, 57, 132, 20, WS_EX_LEFT
+    CONTROL         "", IDS_IF_GAIN, TRACKBAR_CLASS, WS_TABSTOP | TBS_AUTOTICKS | TBS_BOTH, 64, 5, 113, 20, WS_EX_LEFT
+    CONTROL         "", IDS_MIXER_GAIN, TRACKBAR_CLASS, WS_TABSTOP | TBS_AUTOTICKS | TBS_BOTH, 64, 31, 113, 20, WS_EX_LEFT
+    CONTROL         "", IDS_LNA_GAIN, TRACKBAR_CLASS, WS_TABSTOP | TBS_AUTOTICKS | TBS_BOTH, 64, 57, 113, 20, WS_EX_LEFT
     COMBOBOX        ID_COMBO_SR, 272, 16, 73, 101, CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
-    LTEXT           "AV Gain", IDC_ST_AV_GAIN, 8, 13, 27, 8, SS_LEFT, WS_EX_LEFT
+    LTEXT           "AV Gain", IDC_ST_IF_GAIN, 8, 13, 27, 8, SS_LEFT, WS_EX_LEFT
     LTEXT           "Mixer Gain", IDC_ST_MIXER_GAIN, 8, 40, 27, 8, SS_LEFT, WS_EX_LEFT
     LTEXT           "LNA Gain", IDC_ST_LNA_GAIN, 8, 65, 27, 8, SS_LEFT, WS_EX_LEFT
     LTEXT           "Sample rate", 0, 230, 18, 38, 8, SS_LEFT, WS_EX_LEFT
@@ -68,8 +71,8 @@ IDI_ICON1          ICON           ".\\Tonev-Windows-7-Windows-7-headphone.ico"
 //
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 VS_VERSION_INFO VERSIONINFO
-    FILEVERSION     0,0,0,5
-    PRODUCTVERSION  0,0,0,8
+    FILEVERSION     0,0,0,6
+    PRODUCTVERSION  0,0,0,9
     FILEOS          VOS__WINDOWS32
     FILETYPE        VFT_APP
     FILESUBTYPE     VFT2_UNKNOWN
@@ -81,12 +84,12 @@ VS_VERSION_INFO VERSIONINFO
         BLOCK "040904B0"
         {
             VALUE "FileDescription", ""
-            VALUE "FileVersion", "0, 0, 0, 5"
+            VALUE "FileVersion", "0, 0, 0, 6"
             VALUE "InternalName", "Built with AirSpy library"
             VALUE "LegalCopyright", "Copyright (C) 2015 Andrea Montefusco (C) 2013-2014 AirSpy"
             VALUE "OriginalFilename", "extio_airspy_cmake_mgw.dll"
             VALUE "ProductName", "IW0HDV AIRSPY EXTIO"
-            VALUE "ProductVersion", "0, 0, 8, 0"
+            VALUE "ProductVersion", "0, 0, 0, 9"
             VALUE "Comments", "For more information visit http://www.airspy.com\0"
         }
     }

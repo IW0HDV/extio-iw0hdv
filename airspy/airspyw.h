@@ -8,7 +8,7 @@
 #define IDD_SPLASHSCREEN                        1001
 #define IDC_SPLASH_MSG                          40000
 #define IDS_IF_GAIN                             40000
-#define IDC_ST_AV_GAIN                          40001
+#define IDC_ST_IF_GAIN                          40001
 #define IDD_IMAGE_2                             40001
 #define IDS_MIXER_GAIN                          40002
 #define ID_COMBO_SR                             40003
@@ -18,3 +18,6 @@
 #define IDCB_AUTO_MIXER_GAIN                    40007
 #define IDCB_AUTO_LNA_GAIN                      40008
 #define IDCB_BIAS_TEE                           40009
+#define IDC_ST_IF_GAIN_VAL                      40010
+#define IDC_ST_MIXER_GAIN_VAL                   40011
+#define IDC_ST_LNA_GAIN_VAL                     40012

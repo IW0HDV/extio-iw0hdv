@@ -64,8 +64,8 @@ bool AirSpyCtrlGui::OnInit(const GuiEvent& ev)
 	if (pr_) { 
 	    if_gain = pr_->get_vga_gain(); 
         SendMessage(sliderIfGain, TBM_SETPOS, (WPARAM)TRUE, if_gain);
+    	DlgItemPrint(GetDlgItem(ev.hWnd, IDC_ST_IF_GAIN_VAL), "%d", if_gain);
 	}
-	//SendMessage(sliderIfGain, TBM_SETPAGESIZE, (WPARAM)0, (LPARAM)MAKELONG(0, 5));
 	
 	HWND sliderMixerGain = GetDlgItem(ev.hWnd, IDS_MIXER_GAIN);
 	SendMessage(sliderMixerGain, TBM_SETRANGE, (WPARAM)TRUE, (LPARAM)MAKELONG(0, 15));
@@ -74,7 +74,8 @@ bool AirSpyCtrlGui::OnInit(const GuiEvent& ev)
 	if (pr_) { 
 	    mixer_gain = pr_->get_mixer_gain(); 
         SendMessage(sliderMixerGain, TBM_SETPOS, (WPARAM)TRUE, mixer_gain);
-	}
+	    DlgItemPrint(GetDlgItem(ev.hWnd, IDC_ST_MIXER_GAIN_VAL), "%d", mixer_gain);
+    }
 	
 	HWND sliderLnaGain = GetDlgItem(ev.hWnd, IDS_LNA_GAIN);
 	SendMessage(sliderLnaGain, TBM_SETRANGE,    (WPARAM)TRUE, (LPARAM)MAKELONG(0, 15));
@@ -83,6 +84,7 @@ bool AirSpyCtrlGui::OnInit(const GuiEvent& ev)
 	if (pr_) { 
 	    lna_gain = pr_->get_lna_gain(); 
         SendMessage(sliderLnaGain, TBM_SETPOS, (WPARAM)TRUE, lna_gain);
+	    DlgItemPrint(GetDlgItem(ev.hWnd, IDC_ST_LNA_GAIN_VAL), "%d", lna_gain);
 	}
 
 	
@@ -161,18 +163,21 @@ bool  AirSpyCtrlGui::OnHScroll(const GuiEventHScroll& ev)
 {
 	if (GetDlgItem(ev.hWnd, IDS_LNA_GAIN) == ev.hwndCtl) {
 		DWORD newPos = SendMessage(GetDlgItem(ev.hWnd, IDS_LNA_GAIN), TBM_GETPOS, 0, 0);
+		DlgItemPrint(GetDlgItem(ev.hWnd, IDC_ST_LNA_GAIN_VAL), "%d", newPos);
 		LOGT("New LNA GAIN value: %d\r\n", newPos);
 		if (pr_) pr_->set_lna_gain (newPos);
 		return true;
 	} else
 	if (GetDlgItem(ev.hWnd, IDS_MIXER_GAIN) == ev.hwndCtl) {
 		DWORD newPos = SendMessage(GetDlgItem(ev.hWnd, IDS_MIXER_GAIN), TBM_GETPOS, 0, 0);
+		DlgItemPrint(GetDlgItem(ev.hWnd, IDC_ST_MIXER_GAIN_VAL), "%d", newPos);
 		LOGT("New MIXER GAIN value: %d\r\n", newPos);
 		if (pr_) pr_->set_mixer_gain (newPos);
 		return true;
 	} else
 	if (GetDlgItem(ev.hWnd, IDS_IF_GAIN) == ev.hwndCtl) {
 		DWORD newPos = SendMessage(GetDlgItem(ev.hWnd, IDS_IF_GAIN), TBM_GETPOS, 0, 0);
+		DlgItemPrint(GetDlgItem(ev.hWnd, IDC_ST_IF_GAIN_VAL), "%d", newPos);
 		LOGT("New IF GAIN value: %d\r\n", newPos);
 		if (pr_) pr_->set_vga_gain (newPos);
 		return true;
