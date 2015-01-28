@@ -128,7 +128,7 @@ bool AirSpyCtrlGui::OnInit(const GuiEvent& ev)
     //
     // setup for tool bar
     //	
-	HICON icon = LoadIcon(::GetMyHandle(), MAKEINTRESOURCE(IDI_ICON1));
+	HICON icon = LoadIcon(Dll::GetMyHandle(), MAKEINTRESOURCE(IDI_ICON1));
 	
 	SendMessage(ev.hWnd, WM_SETICON, ICON_BIG, (LPARAM)icon);
 	SendMessage(ev.hWnd, WM_SETICON, ICON_SMALL, (LPARAM)icon);

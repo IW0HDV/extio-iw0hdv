@@ -117,7 +117,7 @@ public:
 			the GetHWSR() API to know the new sampling rate.
 			We are calling the callback only for the first instance (otherwise Studio 1 is looping on Start/Stop cycle - TBI).
 		*/
-		if (*pExtioCallback && (::GetInstanceNumber()==1)) {
+		if (*pExtioCallback && (Dll::GetInstanceNumber()==1)) {
 			LOGT("new sample rate: %d\n", new_sr);
 			(*pExtioCallback) (-1, 100, 0., 0);
 		}
@@ -144,8 +144,10 @@ class AirSpyCtrlGui;
 
 class ExtIODll : public Extio {
 public:
-	ExtIODll(HMODULE h) : Extio(h), pExr(0), pSplash(0), pGui(0) {}
+	ExtIODll(HMODULE h) : Extio(h), pExr(0), pSplash(0), pGui(0) { LOGT("%s\n", "ExtioDll AirSpy ctor"); }
 
+	ExtIODll ();
+	
 	void ProcessAttach() 
 	{ 
 		LOG_OPEN("airspy", GetInstanceNumber());

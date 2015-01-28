@@ -272,7 +272,7 @@ PerseusRadio::~PerseusRadio ()
 int PerseusRadio :: callback(void *buf, int buf_size, void *obj)
 {
 
-	PerseusRadio *pobj = (PerseusRadio *)obj;
+	PerseusRadio *pobj = static_cast<PerseusRadio *> (obj);
 	
 	if (pobj) pobj->data_available (buf, buf_size);
 	

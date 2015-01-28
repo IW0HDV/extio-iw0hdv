@@ -171,17 +171,12 @@ int AirSpyRadio::get_frequency ()
 int AirSpyRadio::callback(airspy_transfer_t* transfer)
 {
     AirSpyRadio *p;
-    if (transfer) p = (AirSpyRadio *) transfer->ctx;
+    if (transfer) p = static_cast<AirSpyRadio *> (transfer->ctx);
 
     // AIRSPY_SAMPLE_FLOAT32_IQ:
     uint32_t bytes_to_write = transfer->sample_count * 4 * 2; 
     uint8_t *pt_rx_buffer   = (uint8_t *)transfer->samples;
 	
-    //ssize_t  bytes_written;
-    //struct timeval time_now;
-    //float time_difference, rate;
-	 
-	 
 	for (;bytes_to_write;) {
 
         int spaceleft = p->bs_ - p->bl_ ;

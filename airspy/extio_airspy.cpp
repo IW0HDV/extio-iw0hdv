@@ -23,11 +23,20 @@
 #include "gui_control.h"
 
 
+ExtIODll singleton;
+
+ExtIODll :: ExtIODll (): 
+    Extio(0), pExr(0), pSplash(0), pGui(0) 
+{
+	fprintf (stderr, "%s\n", "ExtioDll AirSpy DEFAULT ctor");
+    Dll::Register (this);	
+}
+	
 //
 // Global: the class fabric function
 // defined in dllmain.h
 // 
-DLL_CLASS(ExtIODll)
+//DLL_CLASS(ExtIODll)
 
 
 bool ExtIODll::InitHW(char *name, char *model, int & extio_type)

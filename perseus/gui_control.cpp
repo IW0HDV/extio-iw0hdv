@@ -72,7 +72,7 @@ bool PerseusCtrlGui::OnInit(const GuiEvent& ev)
 	CheckDlgButton(ev.hWnd, ID_CB_AMP, BST_UNCHECKED);
 	if (pr_) pr_->set_preamp (false);
 
-	HICON icon = LoadIcon(::GetMyHandle(), MAKEINTRESOURCE(IDI_ICON1));
+	HICON icon = LoadIcon(Dll::GetMyHandle(), MAKEINTRESOURCE(IDI_ICON1));
 	
 	SendMessage(ev.hWnd, WM_SETICON, ICON_BIG, (LPARAM)icon);
 	SendMessage(ev.hWnd, WM_SETICON, ICON_SMALL, (LPARAM)icon);
