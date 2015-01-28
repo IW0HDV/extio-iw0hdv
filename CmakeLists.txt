@@ -1,0 +1,84 @@
+#
+# IW0HDV Extio
+#
+# Copyright 2015 by Andrea Montefusco IW0HDV
+#
+# Licensed under GNU General Public License 3.0 or later. 
+# Some rights reserved. See COPYING, AUTHORS.
+#
+# @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
+#
+
+#
+# rm -f -r ./build ; mkdir build ; cd build ; cmake ../ -G "MSYS Makefiles" && make clean && make && make dist_perseus && make dist_hpsdr
+#
+
+cmake_minimum_required(VERSION 2.8)
+
+include (GenerateExportHeader)
+
+# the name of the target operating system
+SET(CMAKE_SYSTEM_NAME Windows)
+
+# here is the target environment located
+SET(CMAKE_FIND_ROOT_PATH /c/MinGW/)
+
+# which compilers to use for C and C++
+#SET(CMAKE_C_COMPILER gcc)
+#SET(CMAKE_CXX_COMPILER g++)
+#SET(CMAKE_RC_COMPILER windres)
+#SET(CMAKE_RC_LINKER g++)
+
+
+#
+# compiler detection
+# and parameters assignments
+#
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
+    "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+	
+# compiler	
+#	-DFLOG
+#	-DNDEBUG
+#	-DCONSOLE
+#
+    set(cxxflags             "-static-libgcc -static-libstdc++ "                   )
+	set(cxxflags "${cxxflags} -DCONSOLE" )
+	set(cxxflags "${cxxflags} -DFLOG" )
+	set(cxxflags "${cxxflags} -DNDEBUG" )
+	set(cxxflags "${cxxflags} -DPTW32_STATIC_LIB -D__CLEANUP_CXX" )
+	set(cxxflags "${cxxflags} -std=gnu++0x -DWINVER=0x502 -fpermissive $(INCLUDES)")
+	set(cxxflags "${cxxflags} -Wall -Wno-unknown-pragmas"                          )
+	
+# linker	
+	set(shared_lib_cxxflags "-static -static-libgcc -static-libstdc++ -s -shared -Wl,--add-stdcall-alias,--subsystem,windows -Wl,-Bstatic ")
+	
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    set(cxxflags "/W4 /WX /EHsc")
+endif()
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${cxxflags}")
+set(CMAKE_SHARED_LINKER_FLAGS "${shared_lib_cxxflags}")
+
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/util)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/extio)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/guiutil)
+
+add_subdirectory (hpsdr)
+add_subdirectory (airspy)
+add_subdirectory (extio)
+add_subdirectory (util)
+add_subdirectory (guiutil)
+add_subdirectory (perseus)
+
+
+		
+# adjust the default behaviour of the FIND_XXX() commands:
+# search headers and libraries in the target environment, search 
+# programs in the host environment
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+
+
