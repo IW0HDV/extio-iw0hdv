@@ -121,7 +121,8 @@ int  ExtIODll::StartHW(long freq)
 {
 	LOGT("EXTIO_NS: %d  EXTIO_BASE_TYPE_SIZE: %d N:%d\n", EXTIO_NS , EXTIO_BASE_TYPE_SIZE , 2);
 
-	if (pExr) pExr->start(EXTIO_NS * EXTIO_BASE_TYPE_SIZE * 2);
+	//if (pExr) pExr->start(EXTIO_NS * EXTIO_BASE_TYPE_SIZE * 2); // wrong !!!!!!! because this is the libperseus-sdr buffer length
+	if (pExr) pExr->start(EXTIO_NS * sizeof(PerseusRxIQSample) * 2);
 
 	return EXTIO_NS; // # of samples returned by callback
 }
