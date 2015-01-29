@@ -22,7 +22,7 @@
 // type of samples exchanged on each ExtIO callback invocation
 typedef ExtIO_int24 EXTIO_BASE_TYPE; 
 
-// # I/Q samples exchanged on each callback invocation
+// # I/Q samples exchanged on each Extio callback invocation
 const int EXTIO_NS = 8192;	
 
 // size of ExtIO sample type

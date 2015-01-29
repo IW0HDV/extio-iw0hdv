@@ -36,9 +36,20 @@
 
 PerseusCtrlGui::PerseusCtrlGui(ExtioPerseusRadio2 < EXTIO_BASE_TYPE > *pr) : Gui(IDD_PERSEUS_CONTROL_DLG), pr_(pr)
 {
+	std::string fn("PERSEUS");
+		
+	if (pr_) fn += pr_->get_serial();
+	
+	cfg_ = new Config<PERSEUS_CFG_T>((fn+".txt").c_str(), std::make_tuple(192000, 0, 0, 0, 0));
+	
 	LOGT("********************************* PerseusCtrlGui: pImpl: %p Gui addr: %p\n", pi, this);
 
 	if (pi && pi->hDialog) OnInit(GuiEvent(pi->hDialog, -1));
+}
+
+PerseusCtrlGui :: ~PerseusCtrlGui () 
+{
+	delete cfg_;
 }
 
 bool PerseusCtrlGui::OnInit(const GuiEvent& ev)
@@ -47,6 +58,12 @@ bool PerseusCtrlGui::OnInit(const GuiEvent& ev)
 	
 	const int *psr;
 	int nsr;
+	int sample_rate =  PERSEUS_DEFAULT_SAMPLE_RATE;
+	if (cfg_) {
+	    sample_rate = cfg_->get<C_SR,int>();
+	    LOGT("Sample rate from cfg(%p): %d\n", cfg_, sample_rate);
+	}
+	
 	if (pr_) {
 		psr = pr_->get_sample_rate_v(nsr);
 		if (psr && nsr) {
@@ -55,8 +72,8 @@ bool PerseusCtrlGui::OnInit(const GuiEvent& ev)
 				snprintf (buf, sizeof(buf), "%d", psr[i]);
 				LOGT("Event ref: %d: [%s]\n", i, buf);
 				SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)buf);
+				if (sample_rate == psr[i]) SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_SETCURSEL, i, 0);
 			}
-			SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_SETCURSEL, 4, 0);
 		}
 	}
 	SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_ATT), CB_ADDSTRING, 0, (LPARAM)"0 dB");
@@ -117,7 +134,10 @@ bool PerseusCtrlGui::ComboBoxSelChange(const GuiEvent &ev)
 		LOGT("event.id: %d item #%d [%s] selected in SR combo\n", ev.id, sel, buf );
 		
 		int nsr;
-		if (sscanf (buf, "%d", &nsr) == 1 && pr_) pr_->setSampleRateHW(nsr);
+		if (sscanf (buf, "%d", &nsr) == 1 && pr_) {
+		    cfg_->set<C_SR,int>(nsr);
+			pr_->setSampleRateHW(nsr);
+		}
 		
 		return true;
 	}
