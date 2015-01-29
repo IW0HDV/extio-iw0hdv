@@ -18,7 +18,7 @@ find_library(LIBUSB10_LIBRARY
 if (NOT LIBUSB10_LIBRARY)
 	message( FATAL_ERROR "libusb-1.0 not found")
 else ()
-	message ( "*************** libusb-1.0 found: "  ${LIBUSB10_LIBRARY})
+	#message ( "*************** libusb-1.0 found: "  ${LIBUSB10_LIBRARY})
 	link_libraries(${LIBUSB10_LIBRARY})
 endif ()
 
@@ -31,7 +31,7 @@ find_library(PTHREAD_LIBRARY
 if (NOT PTHREAD_LIBRARY)
 	message( FATAL_ERROR "pthread not found")
 else ()
-	message ( "*************** pthread found: "  ${PTHREAD_LIBRARY})
+	#message ( "*************** pthread found: "  ${PTHREAD_LIBRARY})
 	include_directories(${CMAKE_SOURCE_DIR}/../pthreads)
 	link_libraries(${PTHREAD_LIBRARY})
 endif ()
@@ -84,8 +84,8 @@ target_link_libraries(extio_airspy_cmake_mgw ${AIRSPY_LIBRARY} ${LIBUSB10_LIBRAR
 
 
 
-message ( "CXX_CFLAGS:                "  ${CMAKE_CXX_FLAGS})			
-message ( "CMAKE_SHARED_LINKER_FLAGS: "  ${CMAKE_SHARED_LINKER_FLAGS})			
+#message ( "CXX_CFLAGS:                "  ${CMAKE_CXX_FLAGS})			
+#message ( "CMAKE_SHARED_LINKER_FLAGS: "  ${CMAKE_SHARED_LINKER_FLAGS})			
 
 GENERATE_EXPORT_HEADER( extio_airspy_cmake_mgw
              BASE_NAME extio_airspy_cmake_mgw

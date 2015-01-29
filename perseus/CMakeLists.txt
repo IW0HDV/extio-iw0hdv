@@ -19,7 +19,7 @@ find_library(PERSEUS_SDR_LIBRARY
 if (NOT PERSEUS_SDR_LIBRARY)
 	message( FATAL_ERROR "perseus lib not found")
 else ()
-	message ( "libperseus-sdr found: "  ${PERSEUS_SDR_LIBRARY} )	
+	#message ( "libperseus-sdr found: "  ${PERSEUS_SDR_LIBRARY} )	
 	##set (XXX_LIB_P ${PERSEUS_SDR_LIBRARY})
 endif ()
  
@@ -32,7 +32,7 @@ find_library(LIBUSB10_LIBRARY
 if (NOT LIBUSB10_LIBRARY)
 	message( FATAL_ERROR "libusb-1.0 not found")
 else ()
-	message ( "libusb-1.0 found: "  ${LIBUSB10_LIBRARY})
+	#message ( "libusb-1.0 found: "  ${LIBUSB10_LIBRARY})
 	#link_libraries(${LIBUSB10_LIBRARY})
 endif ()
 
@@ -80,8 +80,8 @@ target_link_libraries(extio_perseus_cmake_mgw ${PERSEUS_SDR_LIBRARY} ${LIBUSB10_
 
 
 
-message ( "CXX_CFLAGS:                "  ${CMAKE_CXX_FLAGS})			
-message ( "CMAKE_SHARED_LINKER_FLAGS: "  ${CMAKE_SHARED_LINKER_FLAGS})			
+#message ( "CXX_CFLAGS:                "  ${CMAKE_CXX_FLAGS})			
+#message ( "CMAKE_SHARED_LINKER_FLAGS: "  ${CMAKE_SHARED_LINKER_FLAGS})			
 
 GENERATE_EXPORT_HEADER( extio_perseus_cmake_mgw
              BASE_NAME extio_perseus_cmake_mgw
