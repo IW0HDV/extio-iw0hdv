@@ -168,7 +168,7 @@ int PerseusRadio::start (int bufsize)
 	if (pi->descr) {
 		
 		// Configure the receiver for default MS/s operations
-		LOGT("%s\n", "Configuring FPGA...");
+		LOGT("%s buffer length: %d\n", "Configuring FPGA...", bufsize);
 		if (perseus_set_sampling_rate(pi->descr, sr) < 0) {  // specify the sampling rate value in Samples/second
 			LOGT("fpga configuration error: %s\n", perseus_errorstr());
 		}	

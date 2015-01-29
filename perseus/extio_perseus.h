@@ -23,7 +23,7 @@
 template < typename ST >
 class ExtioDataConversion {
 public:
-	ExtioDataConversion (int _ns):ns(_ns) { pb = new unsigned char[2 * ns * sizeof(typename ST::sample_type)]; }
+	ExtioDataConversion (int _ns):ns(_ns) { pb = new unsigned char[2 * ns * EXTIO_BASE_TYPE_SIZE ]; }
 	~ExtioDataConversion() { delete [] pb;  }
 	int getNs() { return ns; }
 
@@ -139,7 +139,7 @@ public:
 	}
 	/*
 	 * method used in order to force a sample rate change, usually as
-	 * per user input on GUI
+	 * per user input on master program GUI
 	 */
 	void setSampleRateHW(int new_sr)
 	{
@@ -157,11 +157,6 @@ public:
 			(*pExtioCallback) (-1, 100, 0., 0);
 		}
 	
-	}
-	
-	int startHW () 
-	{ 
-		return this->start(ns_*sizeof(PerseusRxIQSample)*2); 
 	}
 
 protected:
