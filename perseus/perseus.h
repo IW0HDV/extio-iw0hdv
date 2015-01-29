@@ -27,14 +27,23 @@ struct PerseusRxIQSample {
 	}
 	float float_32 ()
 	{	
-		int rv;
+		int rv = 0;
+	
 		// samples from hardware are 24 bit signed integer
-		// put them in a regular int
-		rv  = (int)((signed char)   s1) << 16;
-		rv += (int)((unsigned char) s2) << 8 ;
-		rv += (int)((unsigned char) s3)      ;
+		// found in s1, s2, s3
+#if 0
+		// convert to int 32 using 24 bits
+     	rv = (s1 << 16) | (s2 << 8) | (s3);
+		// sign extension
+		if (rv & 0x00800000) rv = rv | 0xff000000;
 		// next, rescale to +1.0/-1.0
 		return ((float)rv)/8388607.0f;
+#else
+		// convert to int 32 using 32 bits
+     	rv = (s1 << 24) | (s2 << 16) | (s3 << 8);
+		// next, rescale to +1.0/-1.0
+		return ((float)rv)/2147483647.0f;
+#endif		
 	}
 };
 
