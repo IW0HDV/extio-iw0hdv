@@ -42,7 +42,7 @@ PerseusCtrlGui::PerseusCtrlGui(ExtioPerseusRadio2 < EXTIO_BASE_TYPE > *pr) : Gui
 	
 	cfg_ = new Config<PERSEUS_CFG_T>((fn+".txt").c_str(), std::make_tuple(192000, 0, 0, 0, 0));
 	
-	LOGT("********************************* PerseusCtrlGui: pImpl: %p Gui addr: %p\n", pi, this);
+	LOGT("**** PerseusCtrlGui: pImpl: %p Gui addr: %p Cfg: %p, (%s)\n", pi, this, cfg_, fn.c_str());
 
 	if (pi && pi->hDialog) OnInit(GuiEvent(pi->hDialog, -1));
 }
@@ -76,18 +76,29 @@ bool PerseusCtrlGui::OnInit(const GuiEvent& ev)
 			}
 		}
 	}
+	// populate attenuator drop box
 	SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_ATT), CB_ADDSTRING, 0, (LPARAM)"0 dB");
 	SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_ATT), CB_ADDSTRING, 0, (LPARAM)"-10 dB");
 	SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_ATT), CB_ADDSTRING, 0, (LPARAM)"-20 dB");
 	SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_ATT), CB_ADDSTRING, 0, (LPARAM)"-30 dB");
-	SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_ATT), CB_SETCURSEL, 0, 0);
-
-	CheckDlgButton(ev.hWnd, ID_CB_PRESELECTOR, BST_CHECKED);
-	if (pr_) pr_->set_preselector (true);
-	CheckDlgButton(ev.hWnd, ID_CB_DITHER, BST_UNCHECKED);
-	if (pr_) pr_->set_dither (false);
-	CheckDlgButton(ev.hWnd, ID_CB_AMP, BST_UNCHECKED);
-	if (pr_) pr_->set_preamp (false);
+	int attenuator = 0;
+	if (cfg_) {
+	    attenuator = cfg_->get<C_ATT,int>();
+	    LOGT("Attenuator value from cfg(%p): %d\n", cfg_, attenuator);
+	}
+	if (pr_) {
+		pr_->set_attenuator(attenuator);
+	}
+	SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_ATT), CB_SETCURSEL, attenuator, 0);
+		
+	CheckDlgButton(ev.hWnd, ID_CB_PRESELECTOR, (cfg_->get<C_FE_FILTER,int>() ? BST_CHECKED : BST_UNCHECKED) );
+	if (pr_) pr_->set_preselector (cfg_->get<C_FE_FILTER,int>() ? true: false);
+	
+	CheckDlgButton(ev.hWnd, ID_CB_DITHER, cfg_->get<C_DITHER,int>() ? BST_CHECKED: BST_UNCHECKED);
+	if (pr_) pr_->set_dither (cfg_->get<C_DITHER,int>() ? true: false);
+	
+	CheckDlgButton(ev.hWnd, ID_CB_AMP, cfg_->get<C_PREAMP,int>() ? BST_CHECKED: BST_UNCHECKED);
+	if (pr_) pr_->set_preamp (cfg_->get<C_PREAMP,int>() ? true: false);
 
 	HICON icon = LoadIcon(Dll::GetMyHandle(), MAKEINTRESOURCE(IDI_ICON1));
 	
@@ -146,6 +157,7 @@ bool PerseusCtrlGui::ComboBoxSelChange(const GuiEvent &ev)
 		int sel = ComboBox_GetCurSel(GetDlgItem(ev.hWnd, ID_COMBO_ATT));
 		LOGT("Perseus Ctrl Gui: event.id: %d ATT# %d selected in Attenuator combo\n", ev.id, sel);
 		if (pr_) pr_->set_attenuator(sel);
+		cfg_->set<C_ATT,int>(sel);
 		
 		return true;
 	}
@@ -156,13 +168,19 @@ bool PerseusCtrlGui::ButtonClick(const GuiEvent &ev)
 {
 	// some button/check box has been clicked on
 	if ( ev.id == ID_CB_AMP )  {
-		if (pr_) pr_->set_preamp (IsDlgButtonChecked(ev.hWnd, ID_CB_AMP) == BST_CHECKED);
+		int preamp = IsDlgButtonChecked(ev.hWnd, ID_CB_AMP) == BST_CHECKED;
+		if (pr_) pr_->set_preamp (preamp);
+		cfg_->set<C_PREAMP,int>(preamp);
 	}
 	if ( ev.id == ID_CB_DITHER )  {
-		if (pr_) pr_->set_dither (IsDlgButtonChecked(ev.hWnd, ID_CB_DITHER) == BST_CHECKED);
+		int dither = IsDlgButtonChecked(ev.hWnd, ID_CB_DITHER) == BST_CHECKED;
+		if (pr_) pr_->set_dither (dither);
+		cfg_->set<C_DITHER,int>(dither);
 	}
 	if ( ev.id == ID_CB_PRESELECTOR )  {
-		if (pr_) pr_->set_preselector (IsDlgButtonChecked(ev.hWnd, ID_CB_PRESELECTOR) == BST_CHECKED);
+		int presel = IsDlgButtonChecked(ev.hWnd, ID_CB_PRESELECTOR) == BST_CHECKED;
+		if (pr_) pr_->set_preselector (presel);
+		cfg_->set<C_FE_FILTER,int>(presel);
 	}
 	return true;
 }

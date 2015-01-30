@@ -120,6 +120,14 @@ int PerseusRadio::open () {
 				
 		}
 	if (strlen(buf)) {
+		snprintf (buf, sizeof(buf), "%05d-%02hX%02hX-%02hX%02hX-%02hX%02hX",
+				(uint16_t) pi->prodid.sn, 
+				(uint16_t) pi->prodid.signature[5],
+				(uint16_t) pi->prodid.signature[4],
+				(uint16_t) pi->prodid.signature[3],
+				(uint16_t) pi->prodid.signature[2],
+				(uint16_t) pi->prodid.signature[1],
+				(uint16_t) pi->prodid.signature[0] );
 		serial = new char [strlen(buf)+1];
 		if (serial) strcpy (serial, buf);
 	}
@@ -168,7 +176,7 @@ int PerseusRadio::start (int bufsize)
 	if (pi->descr) {
 		
 		// Configure the receiver for default MS/s operations
-		LOGT("%s buffer length: %d\n", "Configuring FPGA...", bufsize);
+		LOGT("%s @%d buffer length: %d\n", "Configuring FPGA...", sr, bufsize);
 		if (perseus_set_sampling_rate(pi->descr, sr) < 0) {  // specify the sampling rate value in Samples/second
 			LOGT("fpga configuration error: %s\n", perseus_errorstr());
 		}	
