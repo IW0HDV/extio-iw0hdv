@@ -1,0 +1,47 @@
+#ifndef IDC_STATIC
+#define IDC_STATIC (-1)
+#endif
+
+#define IDD_SPLASH_DIALOG                       101
+#define IDB_BITMAP1                             102
+#define IDD_CMD_RECEIVER                        104
+#define IDC_STATIC_HW                           1002
+#define IDD_HERMES                              3000
+#define IDC_MSG_PANE                            3005
+#define IDC_GBOX_1                              3006
+#define IDC_GBOX_2                              3007
+#define IDC_RADIO_BW_384K                       3020
+#define IDC_RADIO_BW_192K                       3021
+#define IDC_RADIO_BW_96K                        3022
+#define IDC_RADIO_BW_48K                        3023
+#define IDC_CB_DITHER                           3040
+#define IDC_CB_PREAMP                           3041
+#define IDC_CB_RANDOMIZER                       3042
+#define IDC_SLIDER_ATT                          3044
+#define IDC_COMBO_N_RX                          3046
+#define IDD_MERCURY                             4000
+#define IDC_GROUP_7                             40000
+#define IDC_ANT_1                               40001
+#define IDC_ANT_2                               40002
+#define IDC_ANT_3                               40003
+#define IDC_SPLSH_MSG_PANE                      40003
+#define IDC_GBOX_4                              40004
+#define IDC_RB_ALEX_LP_3020                     40005
+#define IDC_RB_ALEX_LP_6040                     40006
+#define IDC_RB_ALEX_LP_80                       40007
+#define IDC_RB_ALEX_LP_160                      40008
+#define IDC_RB_ALEX_LP_6                        40009
+#define IDC_RB_ALEX_LP_1210                     40010
+#define IDC_RB_ALEX_LP_1715                     40011
+#define IDC_GBOX5                               40012
+#define IDC_ALEX_HP_BYPASS                      40013
+#define IDC_ALEX_HP_13MHZ                       40014
+#define IDC_ALEX_HP_20MHZ                       40015
+#define IDC_ALEX_HP_9_5MHZ                      40016
+#define IDC_ALEX_HP_6_5MHZ                      40017
+#define IDC_ALEX_HP_1_5MHZ                      40018
+#define IDC_ALEX_HP_6M_LNP                      40019
+#define IDC_ALEX_FILTER_AUTO                    40020
+#define IDC_PC_HPSDRLOGO                        40100
+#define IDC_SPLSH_MSG                           40101
+#define IDC_LBOX_RADIO_FOUND                    40102
