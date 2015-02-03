@@ -23,18 +23,22 @@
 #include "gui_control.h"
 
 
-ExtIODll singleton;
-
 //
-// Global: the class fabric function
-// defined in dllmain.h
-// 
-//DLL_CLASS(ExtIODll)
+// the only object of ExtIODll class
+//
+ExtIODll ExtIODll::singleton;
+
 
 ExtIODll::ExtIODll () : Extio(0), pExr(0), pSplash(0), pGui(0) 
 {
 	fprintf (stderr, "%s\n", "ExtioDll Perseus DEFAULT ctor");
+	// register this instance to the Dll base class
     Dll::Register (this);	
+}
+
+ExtIODll :: ~ExtIODll ()
+{
+	fprintf (stderr, "%s\n", "ExtioDll Perseus DEFAULT ctor");
 }
 
 

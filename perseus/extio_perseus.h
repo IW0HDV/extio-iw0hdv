@@ -172,8 +172,8 @@ class PerseusCtrlGui;
 
 
 class ExtIODll : public Extio {
+
 public:
-	ExtIODll ();
 
 	void ProcessAttach() 
 	{ 
@@ -208,8 +208,23 @@ public:
 	// GUI
 	PerseusSplash *pSplash;
 	PerseusCtrlGui *pGui;
+    
+	// copy ctor and assignment op deleted: this is a singleton global object
+    ExtIODll (const ExtIODll &) = delete;
+    ExtIODll & operator=(const ExtIODll &) = delete ;
 
 private:
+    // static object that guarantees one (and one only) instance is generated at the global
+	// level, so that C++ runtime builds it , calling the empty c'tor
+	// the trick here is that the following static member is an object of this _same_ class
+	// so it has access to c'tor even if it is kept private
+	// see http://accu.org/index.php/journals/1328 by Alexander Nasonov
+	//
+    static ExtIODll singleton;
+
+	ExtIODll ();
+	~ExtIODll ();
+
 };
 
 
