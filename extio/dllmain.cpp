@@ -38,7 +38,7 @@ Dll::Dll (HMODULE hm)
 }
 
 /**
- * Instance tracker
+ * Instance number tracker
  */
 void Dll::inc () 
 {	
@@ -54,6 +54,12 @@ void Dll::dec()
 int Dll::GetInstanceNumber () { return local_instance; }
 int Dll::GetInstanceQuantity () { return instance_; }
 
+/*
+ * pointer to the child objects that has to register here before 
+ * the DllMain is called with DLL_PROCESS_ATTACH
+ * typically that is a global singleton that is initialized by C++ run time
+ *
+ */
 static Dll *pObj = 0;
 
 Dll * Dll::getObj () 
@@ -64,7 +70,8 @@ Dll * Dll::getObj ()
 void Dll :: Register(Dll *singleton)
 {
 	fprintf (stderr, "Dll:: %p %p\n", pObj, singleton);
-	if (singleton) pObj = singleton;
+	// only one class instance can be registered here !
+	if (singleton && (pObj == 0)) pObj = singleton;
 }
 
 
@@ -79,8 +86,10 @@ BOOL APIENTRY DllMain ( HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpRese
 		freopen( "CON", "w", stderr ) ;
 		#endif
 		if (pObj == 0) {
-			//pObj = ::createDllObject (hModule); // creates instance of Dll's derived class
+		#if CONSOLE
 		    fprintf (stderr, "FATAL: no registered OBJECT\n");
+		#endif
+			return FALSE;
 		} else 
 			pObj->SetHModule(hModule);
 
