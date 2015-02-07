@@ -49,9 +49,11 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
 	set(cxxflags "${cxxflags} -DPTW32_STATIC_LIB -D__CLEANUP_CXX" )
 	set(cxxflags "${cxxflags} -std=gnu++0x -DWINVER=0x502 -fpermissive $(INCLUDES)")
 	set(cxxflags "${cxxflags} -Wall -Wno-unknown-pragmas"                          )
-	
+#	set(cxxflags "${cxxflags} -m64" )
+		
 # linker	
 	set(shared_lib_cxxflags "-static -static-libgcc -static-libstdc++ -s -shared -Wl,--add-stdcall-alias,--subsystem,windows -Wl,-Bstatic ")
+#	set(shared_lib_cxxflags "${shared_lib_cxxflags} -m64 ")
 	
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(cxxflags "/W4 /WX /EHsc")
