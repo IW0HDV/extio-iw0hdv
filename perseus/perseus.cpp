@@ -31,12 +31,10 @@ PerseusRadio::PerseusRadio ():
 	dither(false),
 	preamp(false),
 	presel(false),
-	pi(0),
 	nsr_(0),
-	srv(0),
-	serial(0)
+	srv(0)
 {
-	pi = new PRimpl;
+	pi.reset ( new PRimpl );
 	// Set debug info dumped to stderr to the maximum verbose level
 	perseus_set_debug(dbg_lvl);
 			
@@ -57,10 +55,7 @@ PerseusRadio::PerseusRadio ():
 
 const char *PerseusRadio::get_serial ()
 {
-	if (serial && strlen (serial))
-		return serial;
-	else
-		return "";
+	return serial.c_str();
 }
 
 bool PerseusRadio::status () 
@@ -128,25 +123,27 @@ int PerseusRadio::open () {
 				(uint16_t) pi->prodid.signature[2],
 				(uint16_t) pi->prodid.signature[1],
 				(uint16_t) pi->prodid.signature[0] );
-		serial = new char [strlen(buf)+1];
-		if (serial) strcpy (serial, buf);
+		serial = buf;
 	}
 	// Printing all sampling rates available .....
 	{
 		int buf[BUFSIZ];
 		
-	    if (perseus_get_sampling_rates (pi->descr, buf, sizeof(buf)/sizeof(buf[0])) < 0) {
+	    if (perseus_get_sampling_rates (pi->descr, buf, (sizeof(buf)/sizeof(buf[0])) ) < 0) {
 			LOGT("get sampling rates error: %s\n", perseus_errorstr());
-			return 254;;
+			return 254;
 		} else {
 			int nsr = 0;
 			while (buf[nsr]) {
 				LOGT("#%d: sample rate: %d\n", nsr, buf[nsr]);
+				srates.push_back (buf[nsr]);
 				nsr++;
 			}
 			srv = new int [nsr];
 			if (srv) for (int i=0; i<nsr; ++i) srv[i]=buf[i];
 			nsr_ = nsr;
+			
+			
 		}
 	}
 	
@@ -159,15 +156,10 @@ int PerseusRadio::open () {
 	return 0;
 }
 
-const int *PerseusRadio::get_sample_rate_v (int &nsr)
+
+std::vector<int> PerseusRadio::get_sample_rate_v ()
 {
-	if (srv == 0) {
-		nsr = 0;
-		return 0;
-	} else  {
-		nsr = nsr_;
-		return srv;
-	}
+	return srates;
 }
 
 int PerseusRadio::start (int bufsize)
@@ -266,14 +258,10 @@ PerseusRadio::~PerseusRadio ()
 			LOGT("%s\n", "Destroying 2...");	
 			perseus_close(pi->descr);
 		}
-		LOGT("%s\n", "Destroying 3...");	
-		delete pi, pi = 0;
+		// crashes in case hardware is non connected - TBVerified
+    	//perseus_exit();
+	    LOGT("%s\n", "Destroying 3...");		
 	}
-	LOGT("%s\n", "Destroying 4...");		
-	// crashes in case hardware is non connected - TBVerified
-	//perseus_exit();
-	LOGT("%s\n", "Destroying 5...");		
-	if (serial) delete [] serial;
 }
 
 

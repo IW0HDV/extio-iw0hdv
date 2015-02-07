@@ -25,57 +25,55 @@
 #endif
 
 #include "log.h"
-#include "guievent.h"
 #include "util.h"
 #include "guiutil.h"
 #include "gui_impl.h" 
 #include "gui.h" 
 #include "gui_control.h"
+#include "guievent.h"
 #include "perseusw.h"
 
 
-PerseusCtrlGui::PerseusCtrlGui(ExtioPerseusRadio2 < EXTIO_BASE_TYPE > *pr) : Gui(IDD_PERSEUS_CONTROL_DLG), pr_(pr)
+PerseusCtrlGui::PerseusCtrlGui( PEXTPRADIO<EXTIO_BASE_TYPE> pr )
+  : Gui(IDD_PERSEUS_CONTROL_DLG), pr_(pr)
 {
 	std::string fn("PERSEUS");
 		
 	if (pr_) fn += pr_->get_serial();
 	
-	cfg_ = new Config<PERSEUS_CFG_T>((fn+".txt").c_str(), std::make_tuple(192000, 0, 0, 0, 0));
+	cfg_.reset( new Config<PERSEUS_CFG_T>((fn+".txt").c_str(), std::make_tuple(192000, 0, 0, 0, 0)) );
 	
-	LOGT("**** PerseusCtrlGui: pImpl: %p Gui addr: %p Cfg: %p, (%s)\n", pi, this, cfg_, fn.c_str());
+	LOGT("**** PerseusCtrlGui: pImpl: %p Gui addr: %p Cfg: %p, (%s)\n", pi, this, cfg_.get(), fn.c_str());
 
 	if (pi && pi->hDialog) OnInit(GuiEvent(pi->hDialog, -1));
 }
 
 PerseusCtrlGui :: ~PerseusCtrlGui () 
 {
-	delete cfg_;
+	LOGT("**** PerseusCtrlGui: pImpl: %p Gui addr: %p Cfg: %p\n", pi, this, cfg_.get());
 }
 
 bool PerseusCtrlGui::OnInit(const GuiEvent& ev)
 {
 	LOGT("Event ref: %p\n", ev);
 	
-	const int *psr;
-	int nsr;
 	int sample_rate =  PERSEUS_DEFAULT_SAMPLE_RATE;
 	if (cfg_) {
 	    sample_rate = cfg_->get<C_SR,int>();
-	    LOGT("Sample rate from cfg(%p): %d\n", cfg_, sample_rate);
+	    LOGT("Sample rate from cfg(%p): %d\n", cfg_.get(), sample_rate);
 	}
 	
 	if (pr_) {
-		psr = pr_->get_sample_rate_v(nsr);
-		if (psr && nsr) {
-			for (int i=0; i<nsr; ++i) {
-				char buf [128];
-				snprintf (buf, sizeof(buf), "%d", psr[i]);
-				LOGT("Event ref: %d: [%s]\n", i, buf);
-				SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)buf);
-				if (sample_rate == psr[i]) SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_SETCURSEL, i, 0);
-			}
-		}
-	}
+		std::vector <int> v = pr_->get_sample_rate_v();
+        for (std::vector<int>::iterator it = v.begin() ; it != v.end(); ++it) {
+			char buf [128];
+			snprintf (buf, sizeof(buf), "%d", *it);
+			LOGT("Sample rate: %d: [%s]\n", std::distance(v.begin(), it), buf);
+			SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)buf);
+			if (sample_rate == *it) SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_SETCURSEL, std::distance(v.begin(), it), 0);
+        }
+    }
+	
 	// populate attenuator drop box
 	SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_ATT), CB_ADDSTRING, 0, (LPARAM)"0 dB");
 	SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_ATT), CB_ADDSTRING, 0, (LPARAM)"-10 dB");
@@ -84,7 +82,7 @@ bool PerseusCtrlGui::OnInit(const GuiEvent& ev)
 	int attenuator = 0;
 	if (cfg_) {
 	    attenuator = cfg_->get<C_ATT,int>();
-	    LOGT("Attenuator value from cfg(%p): %d\n", cfg_, attenuator);
+	    LOGT("Attenuator value from cfg(%p): %d\n", &cfg_, attenuator);
 	}
 	if (pr_) {
 		pr_->set_attenuator(attenuator);

@@ -47,10 +47,17 @@
 #include "gui_splashscreen.h"
 
 PerseusSplash::PerseusSplash(Gui **p, CommandReceiver **ppCr):
-	Gui(IDD_SPLASHSCREEN) //, sel(-1), ppGui_(p), ppCr_(ppCr), pDev(0)
+	Gui(IDD_SPLASHSCREEN)
 {
 	OnInit(GuiEvent(pi->hDialog, -1));
+	LOGT("**** PerseusSplash: pImpl: %p Gui addr: %p\n", pi, this);
 }
+
+PerseusSplash :: ~PerseusSplash()
+{
+	LOGT("**** PerseusSplash: pImpl: %p Gui addr: %p\n", pi, this);
+}
+
 
 bool PerseusSplash::OnInit(const GuiEvent& ev)
 {

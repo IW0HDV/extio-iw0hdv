@@ -165,11 +165,11 @@ protected:
 	int ns_;
 };
 
-#include "extio_perseus.h"
+#include <memory>
+template <class ST> using PEXTPRADIO = std::shared_ptr < ExtioPerseusRadio2<ST> > ;
 
-class PerseusSplash;
-class PerseusCtrlGui;
-
+#include "gui_splashscreen.h"
+#include "gui_control.h"
 
 class ExtIODll : public Extio {
 
@@ -202,12 +202,12 @@ public:
 	virtual void ShowGUI(void);
 	virtual void HideGUI(void);
 	
+	// main radio object pointer
+    PEXTPRADIO<EXTIO_BASE_TYPE> pExr;
 	
-	ExtioPerseusRadio2 < EXTIO_BASE_TYPE > *pExr;  // main radio object pointer
-
-	// GUI
-	PerseusSplash *pSplash;
-	PerseusCtrlGui *pGui;
+	// GUI pointers
+	PSPLASH  pSplash;
+	PCTRLGUI pGui;
     
 	// copy ctor and assignment op deleted: this is a singleton global object
     ExtIODll (const ExtIODll &) = delete;

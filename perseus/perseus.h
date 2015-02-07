@@ -51,14 +51,10 @@ struct PerseusRxIQSample {
 const int PERSEUS_DEFAULT_SAMPLE_RATE = 192000;
 const int PERSEUS_DEFAULT_FREQUENCY = 7070000;
 
-
-#if defined CONSOLE
-const int dbg_lvl = 5;
-#else
-const int dbg_lvl = -1;
-#endif
-
 class PRimpl;
+#include <memory>
+#include <string>
+#include <vector>
 
 class PerseusRadio {
 public:
@@ -73,7 +69,7 @@ public:
 	int stop();
 	int set_sample_rate (int sr);
 	int get_sample_rate ();
-	const int *get_sample_rate_v (int &);
+	std::vector<int> get_sample_rate_v ();
 	int set_frequency (int);
 	int get_frequency ();
 	int set_attenuator (int);
@@ -82,7 +78,12 @@ public:
 	int set_dither (int);
 	
 protected:	
-
+    #if defined CONSOLE
+    const int dbg_lvl = 5;
+    #else
+    const int dbg_lvl = -1;  // no libperseus-sdr debug messages
+    #endif
+	
 	virtual int data_available (void *, int);
 
 	int		sr;
@@ -93,10 +94,12 @@ protected:
 	bool	presel;
 	
 private:
-	PRimpl *pi;
+	std::unique_ptr < PRimpl > pi;
 	int	nsr_;
 	int	*srv;
-	char *serial;
+    std::vector<int> srates;
+
+	std::string serial;
 	
 static int callback(void *buf, int buf_size, void *obj);
 	

@@ -29,7 +29,7 @@
 ExtIODll ExtIODll::singleton;
 
 
-ExtIODll::ExtIODll () : Extio(0), pExr(0), pSplash(0), pGui(0) 
+ExtIODll::ExtIODll () : Extio(0)
 {
 	fprintf (stderr, "%s\n", "ExtioDll Perseus DEFAULT ctor");
 	// register this instance to the Dll base class
@@ -54,10 +54,10 @@ bool ExtIODll::InitHW(char *name, char *model, int & extio_type)
 	if (first) {
 		first = false;
 
-		pSplash = new PerseusSplash(0, 0);
+		pSplash.reset( new PerseusSplash(0, 0) );
 
-		pExr = new ExtioPerseusRadio2<EXTIO_BASE_TYPE> (EXTIO_NS, &extioCallback );
-
+		pExr.reset ( new ExtioPerseusRadio2<EXTIO_BASE_TYPE> (EXTIO_NS, &extioCallback ) );
+		
 		if  (pExr == 0 || !pExr->status()) {
 			pSplash->SetStatus("Unable to find receiver ! [%s]", pExr ? pExr->last_error() : "");
 			pSplash->Show();
@@ -76,10 +76,19 @@ bool ExtIODll::OpenHW(void)
 	
 	if  (pExr && pExr->status()) {
 		if (pExr->open() == 0) {
-			pGui = new PerseusCtrlGui (pExr);
-			if (pGui) pGui->Show ();
-			rc = true;
-			pSplash->Hide(); delete pSplash; pSplash = 0;
+			// Create the GUI 
+			pGui.reset ( new PerseusCtrlGui (pExr) );
+			if (pGui) {
+				// hide and destroy splash screen
+			    pSplash->Hide();
+			    pSplash = nullptr;
+				// show the GUI
+				pGui->Show ();
+			    rc = true;
+			} else {
+				pSplash->SetStatus("%s", "Unable to create GUI !");
+				pSplash->Show();
+			}
 		} else {
 			pSplash->SetStatus("Unable to open receiver ! [%s]", pExr->last_error() );
 			pSplash->Show();
@@ -98,34 +107,16 @@ bool ExtIODll::OpenHW(void)
 
 void ExtIODll::CloseHW(void)
 {
-	//if (closing) {
-	//	LOGT("11Instance #%d %p %p %p\n", GetInstanceNumber(), pExr, pSplash, pGui);
-	//	return;
-	//}
-	//closing = 1;
-	
-	LOGT("1Instance #%d %p %p %p\n", GetInstanceNumber(), pExr, pSplash, pGui);
 	//LOG_CLOSE; is found in dllmain.cpp
-	
-	if (pSplash) delete pSplash, pSplash = 0;
-	LOGT("2Instance #%d %p %p %p\n", GetInstanceNumber(), pExr, pSplash, pGui);
-
-	if (pGui) delete pGui, pGui = 0;
-	LOGT("3Instance #%d %p %p %p\n", GetInstanceNumber(), pExr, pSplash, pGui);
-
-	if (pExr) delete pExr, pExr = 0;
-	LOGT("4Instance #%d %p %p %p\n", GetInstanceNumber(), pExr, pSplash, pGui);
-
-
-	//closing = 0;
-	return;
+	// all the dynamically allocated objects are freed in smart pointers destructors
+    return;
 }
 
 int  ExtIODll::StartHW(long freq)
 {
 	LOGT("EXTIO_NS: %d  EXTIO_BASE_TYPE_SIZE: %d N:%d\n", EXTIO_NS , EXTIO_BASE_TYPE_SIZE , 2);
 
-	//if (pExr) pExr->start(EXTIO_NS * EXTIO_BASE_TYPE_SIZE * 2); // wrong !!!!!!! because this is the libperseus-sdr buffer length
+    // take care: this is the libperseus-sdr buffer length
 	if (pExr) pExr->start(EXTIO_NS * sizeof(PerseusRxIQSample) * 2);
 
 	return EXTIO_NS; // # of samples returned by callback
@@ -162,11 +153,9 @@ long ExtIODll::GetHWLO(void)
 
 long ExtIODll::GetHWSR(void)
 {
-	int sr;
 	if (pExr) {
-		sr = pExr->get_sample_rate();
-		LOGT("returned sr: %d\n", sr);
-		return sr;
+		LOGT("returned sr: %d\n", pExr->get_sample_rate() );
+		return pExr->get_sample_rate();
 	} else
 		return 0;
 }

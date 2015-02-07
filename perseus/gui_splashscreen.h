@@ -19,7 +19,7 @@ class CommandReceiver;
 class PerseusSplash: public Gui {
 public:
 	PerseusSplash(Gui **pG, CommandReceiver **pCr);
-	~PerseusSplash() {}
+	~PerseusSplash();
 	void Show();
 
 	void SetHw(const char *);
@@ -27,21 +27,15 @@ public:
 	void SetStatus (const char *, ARGS... args);
 	void AppendMessage(const char *); 
 
-	#if 0
-	virtual int ScanStarted();
-	virtual int ScanStopped(int nh);
-	virtual int	InterfaceFound(Ethernet::NetInterface *pni);
-	virtual int	DeviceFound(Ethernet::Device *pd);
-	int GetSel() { return sel; }
-    #endif
 	virtual bool OnInit(const GuiEvent& ev);
 	virtual bool OnWmUser(int n, const GuiEvent& ev);
-//	virtual bool ListBoxDoubleClick(const GuiEvent &ev);
 
 private:
 	int sel;
-//	CommandReceiver **ppCr_;
 };
+
+#include <memory>
+typedef std::shared_ptr<PerseusSplash> PSPLASH;
 
 #endif
 

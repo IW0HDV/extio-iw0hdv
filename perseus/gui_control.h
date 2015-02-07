@@ -12,6 +12,10 @@
 #if !defined __GUI_CONTROL_H__
 #define __GUI_CONTROL_H__
 
+#include <memory>
+class PerseusCtrlGui;
+typedef std::shared_ptr<PerseusCtrlGui> PCTRLGUI;
+
 #include "gui.h"
 #include "extio_config.h"
 #include "extio_perseus.h"
@@ -21,7 +25,7 @@ typedef std::tuple<int, int, int, int, int> PERSEUS_CFG_T;
 
 class PerseusCtrlGui: public Gui {
 public:
-	PerseusCtrlGui (ExtioPerseusRadio2 < EXTIO_BASE_TYPE > *);
+	PerseusCtrlGui (PEXTPRADIO<EXTIO_BASE_TYPE>);
 	~PerseusCtrlGui () ;
 
 	//void Show ();
@@ -36,14 +40,11 @@ public:
 
 
 private:
-	//int sr;
-	ExtioPerseusRadio2 < EXTIO_BASE_TYPE > *pr_;
+	PEXTPRADIO<EXTIO_BASE_TYPE> pr_;
 	
 	enum { C_SR = 0, C_ATT = 1, C_DITHER = 2, C_PREAMP = 3, C_FE_FILTER = 4 } ;
 	
-	Config<PERSEUS_CFG_T> *cfg_; // ("AIRSPY.txt", std::make_tuple(2500000, 5, 10, 6, 0, 0));
+	std::unique_ptr < Config<PERSEUS_CFG_T> > cfg_;
 };
-
-
 
 #endif
