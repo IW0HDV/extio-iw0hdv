@@ -38,7 +38,7 @@ ExtIODll::ExtIODll () : Extio(0)
 
 ExtIODll :: ~ExtIODll ()
 {
-	fprintf (stderr, "%s\n", "ExtioDll Perseus DEFAULT ctor");
+	fprintf (stderr, "%s\n", "ExtioDll Perseus dctor");
 }
 
 
