@@ -11,11 +11,7 @@
 
 
 #if defined _MSC_VER || defined __MINGW32__
-#include <winsock2.h>
-#include <iphlpapi.h>
-#pragma comment (lib, "ws2_32.lib")
-// Link with Iphlpapi.lib
-#pragma comment(lib, "IPHLPAPI.lib")
+#include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>			// Include header
 #pragma comment(lib, "comctl32.lib")	// Include library
@@ -33,29 +29,29 @@
 #include "gui.h" 
 #include "gui_control.h"
 #include "airspyw.h"
-//#include <string>
+#include <string>
 
-AirSpyCtrlGui::AirSpyCtrlGui(ExtioAirSpyRadio < EXTIO_BASE_TYPE > *pr) : Gui(IDD_AIRSPY_CONTROL_DLG), pr_(pr), cfg_(0)
+AirSpyCtrlGui::AirSpyCtrlGui(PEXTPRADIO<EXTIO_BASE_TYPE> &pr): 
+    Gui(IDD_AIRSPY_CONTROL_DLG), pr_(pr)
 {
 	std::string fn("AIRSPY");
 	
 	if (pr_) fn += pr_->get_serial();
 	
-	cfg_ = new Config<AIRSPY_CFG_T>((fn+".txt").c_str(), std::make_tuple(2500000, 5, 10, 6, 0, 0, 0));
+	cfg_.reset ( new Config<AIRSPY_CFG_T>((fn+".txt").c_str(), std::make_tuple(2500000, 5, 10, 6, 0, 0, 0)) );
 
-	LOGT("********************************* AirSpyCtrlGui: pImpl: %p Gui addr: %p Cfg: %p, (%s)\n", pi, this, cfg_, fn.c_str());
+	LOGT("******* AirSpyCtrlGui: pImpl: %p Gui addr: %p Cfg: %p, (%s)\n", pi, this, cfg_.get(), fn.c_str());
 
 	if (pi && pi->hDialog) OnInit(GuiEvent(pi->hDialog, -1));
 }
 
 AirSpyCtrlGui::~AirSpyCtrlGui () 
 {
-	delete cfg_;
 }
 
 bool AirSpyCtrlGui::OnInit(const GuiEvent& ev)
 {
-	LOGT("Event ref: %p cfg: %p\n", ev, cfg_);
+	LOGT("Event ref: %p cfg: %p\n", ev, cfg_.get());
 
 	// sample rate combobox, there are only two sample rates available in AIRSPY receiver
 	SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)"10000000");
@@ -64,7 +60,7 @@ bool AirSpyCtrlGui::OnInit(const GuiEvent& ev)
 	int sample_rate = 2500000;
 	if (cfg_) {
 	    sample_rate = cfg_->get<C_SR,int>();
-	    LOGT("Sample rate from cfg(%p): %d\n", cfg_, sample_rate);
+	    LOGT("Sample rate from cfg(%p): %d\n", cfg_.get(), sample_rate);
 	}
 
 	if (sample_rate == 2500000) {

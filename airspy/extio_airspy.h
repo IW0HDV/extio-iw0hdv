@@ -59,7 +59,7 @@ public:
 		ns_(ns)
 	{  }
 
-	virtual ~ExtioAirSpyRadio() {}
+	virtual ~ExtioAirSpyRadio() { LOGT("%s\n", "~ExtioAirSpyRadio()"); }
 
 
 	// called from the receiving context when the buffer is full
@@ -124,29 +124,25 @@ public:
 	
 	}
 	
-	int startHW () 
+	int startHW (int buf_size) 
 	{ 
-		return this->start(ns_*sizeof(AirSpyRxIQSample)*2); 
+		return this->start(buf_size); 
 	}
-
+	
 protected:
 	int cnt;
 	EXTIO_RX_CALLBACK *pExtioCallback;
 	int ns_;
 };
 
+#include <memory>
+template <class ST> using PEXTPRADIO = std::shared_ptr < ExtioAirSpyRadio<ST> > ;
 
-#include "extio_airspy.h"
-
-class AirSpySplash;
-class AirSpyCtrlGui;
-
+#include "gui_splashscreen.h"
+#include "gui_control.h"
 
 class ExtIODll : public Extio {
 public:
-	ExtIODll(HMODULE h) : Extio(h), pExr(0), pSplash(0), pGui(0) { LOGT("%s\n", "ExtioDll AirSpy ctor"); }
-
-	ExtIODll ();
 	
 	void ProcessAttach() 
 	{ 
@@ -154,6 +150,7 @@ public:
 	}
 	void ProcessDetach() 
 	{ 
+		LOGT("Process_Detach: instance: %d\n", GetInstanceNumber());
 		CloseHW();  // force radio hardware close 
 	}
 	void ThreadAttach() {}
@@ -175,14 +172,29 @@ public:
 	virtual void ShowGUI(void);
 	virtual void HideGUI(void);
 	
-	
-	ExtioAirSpyRadio < EXTIO_BASE_TYPE > *pExr;  // main radio object pointer
+private:
 
 	// GUI
-	AirSpySplash *pSplash;
-	AirSpyCtrlGui *pGui;
+	PSPLASH  pSplash;
+	PCTRLGUI pGui;
 
-private:
+    // Radio
+    PEXTPRADIO<EXTIO_BASE_TYPE> pExr;
+
+	// copy ctor and assignment op deleted: this is a singleton global object
+    ExtIODll (const ExtIODll &) = delete;
+    ExtIODll & operator=(const ExtIODll &) = delete ;
+
+    // static object that guarantees one (and one only) instance is generated at the global
+	// level, so that C++ runtime builds it , calling the empty c'tor
+	// the trick here is that the following static member is an object of this _same_ class
+	// so it has access to c'tor even if it is kept private
+	// see http://accu.org/index.php/journals/1328 by Alexander Nasonov
+	//
+    static ExtIODll singleton;
+
+	ExtIODll ();
+	virtual ~ExtIODll ();
 };
 
 #endif

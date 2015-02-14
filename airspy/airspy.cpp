@@ -32,6 +32,25 @@ AirSpyRadio::AirSpyRadio ():
     }
 }
 
+
+AirSpyRadio::~AirSpyRadio ()
+{
+    if (device) {
+        // call to airspy_stop_rx() is not mandatory because it is recalled later into airspy_close()
+
+        // turn off preamplifier's power supply
+		set_rf_bias(0);
+    
+        int result = airspy_close(device);
+        if( result != AIRSPY_SUCCESS ) {
+           LOGT("airspy_close() failed: %s (%d)\n", airspy_error_name((airspy_error)result), result);
+        }
+    }
+    airspy_exit();
+	LOGT("%s\n", "~AirSpyRadio" );
+}
+
+
 bool AirSpyRadio::status ()
 {
     return true;
@@ -69,21 +88,6 @@ int AirSpyRadio::open ()
 	}
 }
 
-AirSpyRadio::~AirSpyRadio ()
-{
-    if (device) {
-        int result = airspy_stop_rx(device);
-        if( result != AIRSPY_SUCCESS ) {
-           LOGT("airspy_stop_rx() failed: %s (%d)\n", airspy_error_name((airspy_error)result), result);
-        }
-		set_rf_bias(0);
-        result = airspy_close(device);
-        if( result != AIRSPY_SUCCESS ) {
-           LOGT("airspy_close() failed: %s (%d)\n", airspy_error_name((airspy_error)result), result);
-        }
-	}
-    airspy_exit();
-}
 
 int AirSpyRadio::start (int bufsize)
 {

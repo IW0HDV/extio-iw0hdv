@@ -16,29 +16,18 @@
 #include <sys/stat.h>
 
 #if defined _MSC_VER || defined __MINGW32__
-#include <winsock2.h>
-#include <iphlpapi.h>
-#pragma comment (lib, "ws2_32.lib")
-// Link with Iphlpapi.lib
-#pragma comment(lib, "IPHLPAPI.lib")
+#include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>			// Include header
 #pragma comment(lib, "comctl32.lib")	// Include library
 #pragma warning( disable : 4995 )
 #endif
-
 #if defined _MSC_VER
 #include <strsafe.h>
 #endif
 
-
 #include "util.h"
-#include "airspy.hpp"
 #include "log.h"
-#include "log.h"
-#include "dllmain.h" // for GetMyHandle()
-#include "Extio_config.h"
-#include "ExtIO_airspy.h"
 #include "guievent.h"
 #include "guiutil.h"
 #include "gui_impl.h" 
@@ -47,9 +36,9 @@
 #include "gui_splashscreen.h"
 
 AirSpySplash::AirSpySplash(Gui **p, CommandReceiver **ppCr):
-	Gui(IDD_SPLASHSCREEN) //, sel(-1), ppGui_(p), ppCr_(ppCr), pDev(0)
+	Gui(IDD_SPLASHSCREEN)
 {
-	OnInit(GuiEvent(pi->hDialog, -1));
+	if (pi && pi->hDialog) OnInit(GuiEvent(pi->hDialog, -1));
 }
 
 bool AirSpySplash::OnInit(const GuiEvent& ev)

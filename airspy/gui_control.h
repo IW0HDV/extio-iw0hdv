@@ -12,6 +12,10 @@
 #if !defined __GUI_CONTROL_H__
 #define      __GUI_CONTROL_H__
 
+#include <memory>
+class AirSpyCtrlGui;
+typedef std::shared_ptr<AirSpyCtrlGui> PCTRLGUI;
+
 #include "gui.h"
 #include "extio_config.h"
 #include "extio_airspy.h"
@@ -22,7 +26,7 @@ typedef std::tuple<int, int, int, int, int, int, int> AIRSPY_CFG_T;
 
 class AirSpyCtrlGui: public Gui {
 public:
-	AirSpyCtrlGui (ExtioAirSpyRadio < EXTIO_BASE_TYPE > *);
+	AirSpyCtrlGui (PEXTPRADIO<EXTIO_BASE_TYPE> &pExr);
 	~AirSpyCtrlGui ();
 
 	void EnableControls();
@@ -34,11 +38,13 @@ public:
     virtual bool ComboBoxSelChange(const GuiEvent &ev);
 
 private:
-	ExtioAirSpyRadio < EXTIO_BASE_TYPE > *pr_;
+
+    PEXTPRADIO<EXTIO_BASE_TYPE> pr_;
 	
 	enum { C_SR = 0, C_LNA_G = 1, C_MIX_G = 2, C_IF_G = 3, C_A_MIX_G = 4, C_A_LNA_G = 5, C_BIAS = 6 } ;
 	
-	Config<AIRSPY_CFG_T> *cfg_; // ("AIRSPY.txt", std::make_tuple(2500000, 5, 10, 6, 0, 0));
+	std::unique_ptr < Config<AIRSPY_CFG_T> > cfg_;
+	
 };
 
 #endif

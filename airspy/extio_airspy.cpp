@@ -23,20 +23,20 @@
 #include "gui_control.h"
 
 
-ExtIODll singleton;
+ExtIODll ExtIODll::singleton;
 
-ExtIODll :: ExtIODll (): 
-    Extio(0), pExr(0), pSplash(0), pGui(0) 
+
+ExtIODll :: ExtIODll (): Extio(0) 
 {
 	fprintf (stderr, "%s\n", "ExtioDll AirSpy DEFAULT ctor");
     Dll::Register (this);	
 }
 	
-//
-// Global: the class fabric function
-// defined in dllmain.h
-// 
-//DLL_CLASS(ExtIODll)
+ExtIODll :: ~ExtIODll ()
+{
+	fprintf (stderr, "%s\n", "ExtioDll Airspy dctor");
+}
+
 
 
 bool ExtIODll::InitHW(char *name, char *model, int & extio_type)
@@ -51,9 +51,9 @@ bool ExtIODll::InitHW(char *name, char *model, int & extio_type)
 	if (first) {
 		first = false;
 		
-		pSplash = new AirSpySplash(0, 0);
+		pSplash.reset ( new AirSpySplash(0, 0) );
 
-		pExr = new ExtioAirSpyRadio<EXTIO_BASE_TYPE> (EXTIO_NS, &extioCallback );
+		pExr.reset ( new ExtioAirSpyRadio<EXTIO_BASE_TYPE> (EXTIO_NS, &extioCallback ) );
 
 		if  (pExr == 0 || !pExr->status()) {
 			pSplash->SetStatus("Unable to find receiver ! [%s]", pExr ? pExr->last_error() : "");
@@ -75,11 +75,11 @@ bool ExtIODll::OpenHW(void)
 	
 	if  (pExr && pExr->status()) {
 		if (pExr->open() == 0) {
-			pGui = new AirSpyCtrlGui (pExr);
+			pSplash->Hide(); pSplash = nullptr;
+
+			pGui.reset ( new AirSpyCtrlGui (pExr) );
 			if (pGui) pGui->Show ();
 			rc = true;
-			pSplash->Hide(); 
-			delete pSplash; pSplash = 0;
 		} else {
 			pSplash->SetStatus("Unable to open receiver ! [%s]", pExr->last_error() );
 			pSplash->Show();
@@ -94,20 +94,20 @@ bool ExtIODll::OpenHW(void)
 
 void ExtIODll::CloseHW(void)
 {
-
-	LOGT("1Instance #%d %p %p %p\n", GetInstanceNumber(), pExr, pSplash, pGui);
-	//LOG_CLOSE; is found in dllmain.cpp
+	// all the dynamically allocated objects are freed in smart pointers destructors
 	
-	LOGT("2Instance #%d %p %p %p\n", GetInstanceNumber(), pExr, pSplash, pGui);
-	if (pSplash) delete pSplash, pSplash = 0;
+    LOGT("1Instance #%d %p %p %p\n", GetInstanceNumber(), pExr.get(), pSplash.get(), pGui.get());
+    pSplash = nullptr;
+    
+    LOGT("2Instance #%d %p %p %p\n", GetInstanceNumber(), pExr.get(), pSplash.get(), pGui.get());
+    pGui = nullptr;
+	
+    LOGT("3Instance #%d %p %p %p\n", GetInstanceNumber(), pExr.get(), pSplash.get(), pGui.get());
+    pExr = nullptr;
 
-	LOGT("3Instance #%d %p %p %p\n", GetInstanceNumber(), pExr, pSplash, pGui);
-	if (pGui) delete pGui, pGui = 0;
-
-	LOGT("4Instance #%d %p %p %p\n", GetInstanceNumber(), pExr, pSplash, pGui);
-	if (pExr) delete pExr, pExr = 0;
-
-	return;
+	//LOG_CLOSE; is found in dllmain.cpp
+    
+    return;
 }
 
 
@@ -115,7 +115,7 @@ int  ExtIODll::StartHW(long freq)
 {
 	LOGT("EXTIO_NS: %d  EXTIO_BASE_TYPE_SIZE: %d N:%d\n", EXTIO_NS , EXTIO_BASE_TYPE_SIZE , 2);
 
-	if (pExr) pExr->start(EXTIO_NS * EXTIO_BASE_TYPE_SIZE * 2);
+	if (pExr) pExr->startHW(EXTIO_NS * EXTIO_BASE_TYPE_SIZE * 2);
 
 	return EXTIO_NS; // # of samples returned by callback
 }

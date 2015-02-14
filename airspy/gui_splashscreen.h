@@ -34,6 +34,9 @@ private:
 	int sel;
 };
 
+#include <memory>
+typedef std::shared_ptr<AirSpySplash> PSPLASH;
+
 #endif
 
 
