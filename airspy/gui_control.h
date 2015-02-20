@@ -39,6 +39,8 @@ public:
 
 private:
 
+    void set_lna_gain_warn (bool);
+
     PEXTPRADIO<EXTIO_BASE_TYPE> pr_;
 	
 	enum { C_SR = 0, C_LNA_G = 1, C_MIX_G = 2, C_IF_G = 3, C_A_MIX_G = 4, C_A_LNA_G = 5, C_BIAS = 6 } ;

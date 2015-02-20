@@ -40,7 +40,7 @@ FONT 8, "Ms Shell Dlg", 0, 0, 1
     COMBOBOX        ID_COMBO_SR, 272, 16, 73, 101, CBS_DROPDOWNLIST | CBS_HASSTRINGS, WS_EX_LEFT
     LTEXT           "AV Gain", IDC_ST_IF_GAIN, 8, 13, 27, 8, SS_LEFT, WS_EX_LEFT
     LTEXT           "Mixer Gain", IDC_ST_MIXER_GAIN, 8, 40, 27, 8, SS_LEFT, WS_EX_LEFT
-    LTEXT           "LNA Gain", IDC_ST_LNA_GAIN, 8, 65, 27, 8, SS_LEFT, WS_EX_LEFT
+    LTEXT           "LNA Gain", IDC_ST_LNA_GAIN, 8, 65, 35, 8, SS_LEFT, WS_EX_LEFT
     LTEXT           "Sample rate", 0, 230, 18, 38, 8, SS_LEFT, WS_EX_LEFT
 }
 

@@ -97,6 +97,7 @@ bool AirSpyCtrlGui::OnInit(const GuiEvent& ev)
 	if (pr_) pr_->set_lna_gain(lna_gain); 
     SendMessage(sliderLnaGain, TBM_SETPOS, (WPARAM)TRUE, lna_gain);
 	DlgItemPrint( GuiEvent (GetDlgItem(ev.hWnd, IDC_ST_LNA_GAIN_VAL),0), "%d", lna_gain);
+    set_lna_gain_warn (lna_gain == 15);
 	
 	// MIXER AGC check box
 	int mixer_agc = cfg_->get< C_A_MIX_G, int>();
@@ -190,6 +191,13 @@ bool AirSpyCtrlGui::ButtonClick(const GuiEvent &ev)
 	return true;
 }
 
+void AirSpyCtrlGui::set_lna_gain_warn (bool flag)
+{
+	if (flag == true) DlgItemPrint(GuiEvent(GetDlgItem(pi->hDialog, IDC_ST_LNA_GAIN),IDC_ST_LNA_GAIN), "%s", "!LNA Gain!");
+	             else DlgItemPrint(GuiEvent(GetDlgItem(pi->hDialog, IDC_ST_LNA_GAIN),IDC_ST_LNA_GAIN), "%s", "LNA Gain");
+}
+
+
 bool  AirSpyCtrlGui::OnHScroll(const GuiEventHScroll& ev)
 {
 	if (GetDlgItem(ev.hWnd, IDS_LNA_GAIN) == ev.hwndCtl) {
@@ -198,6 +206,7 @@ bool  AirSpyCtrlGui::OnHScroll(const GuiEventHScroll& ev)
 		LOGT("New LNA GAIN value: %d\r\n", newPos);
 		if (pr_) pr_->set_lna_gain (newPos);
 		cfg_->set<C_LNA_G,int>(newPos);
+		set_lna_gain_warn (newPos == 15);
 		return true;
 	} else
 	if (GetDlgItem(ev.hWnd, IDS_MIXER_GAIN) == ev.hwndCtl) {
