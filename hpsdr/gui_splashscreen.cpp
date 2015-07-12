@@ -43,7 +43,7 @@
 
 #include "hpsdr.h"
 #include "extio_config.h"
-#include "extIO_hpsdr.h"
+#include "extio_hpsdr.h"
 
 static const char *buildString = " - " __DATE__ ", " __TIME__ " - "
 #if defined _MSC_VER

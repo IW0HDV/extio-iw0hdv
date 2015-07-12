@@ -40,16 +40,16 @@ ADD_CUSTOM_COMMAND(
 include_directories(.)
 
 SET(HPSDR_SRCS
+					hpsdr.cpp
+					intradllcomm.cpp
 					extio_hpsdr.cpp
 					gui_splashscreen.cpp  
 					gui_control.cpp
-					hpsdr.cpp
-					intradllcomm.cpp  
 					${CMAKE_CURRENT_BINARY_DIR}/resource.rc
 )
 
-link_libraries(extiobase)
 link_libraries(util)
+link_libraries(extiobase)
 link_libraries(guiutil)
 
 link_libraries(ws2_32 iphlpapi)

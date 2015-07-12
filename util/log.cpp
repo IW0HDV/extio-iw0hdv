@@ -26,7 +26,7 @@
 
 #include "util.h"
 
-#define _DONT_DECLARE_TEMPLATE_
+#define _DECLARE_TEMPLATE_
 #include "log.h"
 
 #if !defined NDEBUG || defined FLOG

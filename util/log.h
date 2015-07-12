@@ -63,8 +63,8 @@ X& Singleton()
 //
 // http://stackoverflow.com/questions/8130602/using-extern-template-c0x
 //
-#if !defined _DONT_DECLARE_TEMPLATE_
-extern template Log &Singleton<Log>();
+#if defined _DECLARE_TEMPLATE_
+template Log &Singleton<Log>();
 #endif
 
 #define LOG_OPEN(file,n) Singleton<Log>().open(file, n) 

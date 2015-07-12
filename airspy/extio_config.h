@@ -23,7 +23,7 @@
 typedef ExtIO_float32 EXTIO_BASE_TYPE; 
 
 // # I/Q samples exchanged on each callback invocation
-const int EXTIO_NS = 8192;	
+const int EXTIO_NS = (8192*4);	
 
 // size of ExtIO sample type
 enum { EXTIO_BASE_TYPE_SIZE = sizeof(typename EXTIO_BASE_TYPE::sample_type) }; 

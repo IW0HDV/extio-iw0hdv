@@ -108,7 +108,6 @@ void ExtioHpsdrRadio<ST> :: setSampleRateHW(int new_sr)
 }
 
 
-
 //
 // Globals
 //
@@ -137,6 +136,13 @@ template < typename EXTIO_SAMPLE_TYPE >
 ExtioHpsdrRadio<EXTIO_SAMPLE_TYPE> *
 CreateExtioHpsdrRadio (const char *board_id, CommandReceiver *pCr, ExtIODll *pEio)
 {
+	// explicitly call CreateExtioHpsdrRadio<EXTIO_SAMPLE_TYPE> in order to force to generate code in case
+	// the compiler optimizations are used; otherwise a link error is generated in modules that don't see the definition
+	static ExtioHpsdrRadio<EXTIO_SAMPLE_TYPE> *p = CreateExtioHpsdrRadio<EXTIO_SAMPLE_TYPE> ((const char *)0,(CommandReceiver *)0,(ExtIODll *)0);
+
+	if (board_id == 0) {
+		p=0;return 0;
+	}
 	RadioFactory<EXTIO_SAMPLE_TYPE> rf;
 
 	return rf.Create(board_id, bufHR, /* &ExtioCallback */ &(pEio->extioCallback), pCr);
@@ -299,6 +305,11 @@ int ExtIODll::StartHW(long LOfrequency)
 						// create Gui and setup it
 						pGui = pExr->CreateGui(EXTIO_DEFAULT_SAMPLE_RATE);
 						pGui->setRadio(pExr);
+
+						// explicitly call setSampleRateHW in order to force to generate code in case
+						// the compiler optimizations are used; otherwise a link error is generated
+						// in modules that don't see the definition
+						pExr->setSampleRateHW (0);
 					}
 				}
 
