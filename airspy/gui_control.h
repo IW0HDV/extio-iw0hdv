@@ -21,7 +21,7 @@ typedef std::shared_ptr<AirSpyCtrlGui> PCTRLGUI;
 #include "extio_airspy.h"
 #include <config.h>
 	
-typedef std::tuple<int, int, int, int, int, int, int> AIRSPY_CFG_T;
+typedef std::tuple<int, int, int, int, int, int, int, int> AIRSPY_CFG_T;
 	
 
 class AirSpyCtrlGui: public Gui {
@@ -43,7 +43,7 @@ private:
 
     PEXTPRADIO<EXTIO_BASE_TYPE> pr_;
 	
-	enum { C_SR = 0, C_LNA_G = 1, C_MIX_G = 2, C_IF_G = 3, C_A_MIX_G = 4, C_A_LNA_G = 5, C_BIAS = 6 } ;
+	enum { C_SR = 0, C_LNA_G = 1, C_MIX_G = 2, C_IF_G = 3, C_A_MIX_G = 4, C_A_LNA_G = 5, C_BIAS = 6, C_FREQ_C = 7 } ;
 	
 	std::unique_ptr < Config<AIRSPY_CFG_T> > cfg_;
 	

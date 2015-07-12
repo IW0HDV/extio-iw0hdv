@@ -21,3 +21,4 @@
 #define IDC_ST_IF_GAIN_VAL                      40010
 #define IDC_ST_MIXER_GAIN_VAL                   40011
 #define IDC_ST_LNA_GAIN_VAL                     40012
+#define IDCB_FREQ_CHECK                         40013

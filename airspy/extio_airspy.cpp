@@ -133,10 +133,13 @@ void ExtIODll::StopHW(void)
 
 int ExtIODll::SetHWLO(long freq)
 {
-/* Parameter freq shall be between 24000000(24MHz) and 1750000000(1.75GHz) */
-	if (freq < 24000000) return -10000;
-	if (freq > 1750000000) return 1750000000;
-	
+	if (pExr->freqBoundaryCheck ()) {
+		/* Parameter freq shall be between 24000000(24MHz) and 1750000000(1.75GHz) */
+		if (freq < 24000000) return -10000;
+		if (freq > 1750000000) return 1750000000;
+	} else {
+		LOGT("%s: %ld\n", "No freq check: ", freq);
+	}
 	if (pExr) pExr->set_frequency (freq);
 
 	return 0;

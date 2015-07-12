@@ -56,7 +56,8 @@ public:
 		AirSpyRadio (),
 		cnt(0), 
 		pExtioCallback(pCb),
-		ns_(ns)
+		ns_(ns),
+		check_freq_boundary(1)
 	{  }
 
 	virtual ~ExtioAirSpyRadio() { LOGT("%s\n", "~ExtioAirSpyRadio()"); }
@@ -129,10 +130,14 @@ public:
 		return this->start(buf_size); 
 	}
 	
+	int  freqBoundaryCheck () { return check_freq_boundary; }
+	void setFreqBoundaryCheck (int x) { check_freq_boundary = x; }
+
 protected:
 	int cnt;
 	EXTIO_RX_CALLBACK *pExtioCallback;
 	int ns_;
+	int check_freq_boundary;
 };
 
 #include <memory>

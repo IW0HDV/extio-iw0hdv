@@ -38,7 +38,7 @@ AirSpyCtrlGui::AirSpyCtrlGui(PEXTPRADIO<EXTIO_BASE_TYPE> &pr):
 	
 	if (pr_) fn += pr_->get_serial();
 	
-	cfg_.reset ( new Config<AIRSPY_CFG_T>((fn+".txt").c_str(), std::make_tuple(2500000, 5, 10, 6, 0, 0, 0)) );
+	cfg_.reset ( new Config<AIRSPY_CFG_T>((fn+".txt").c_str(), std::make_tuple(2500000, 5, 10, 6, 0, 0, 0, 1)) );
 
 	LOGT("******* AirSpyCtrlGui: pImpl: %p Gui addr: %p Cfg: %p, (%s)\n", pi, this, cfg_.get(), fn.c_str());
 
@@ -115,12 +115,17 @@ bool AirSpyCtrlGui::OnInit(const GuiEvent& ev)
     // enable manual control accordingly
     ::EnableWindow(GetDlgItem(ev.hWnd, IDS_LNA_GAIN), (lna_agc == 0));		
 
-	
 	// BIAS check box
 	int bias = cfg_->get< C_BIAS, int>();
 	LOGT("BIAS value from configuration: %d\n", bias);
 	if (pr_) pr_->set_rf_bias(bias);	
     CheckDlgButton (ev.hWnd, IDCB_BIAS_TEE, bias);
+
+	// Frequency check, check box
+	int check_f = cfg_->get< C_FREQ_C, int>();
+	LOGT("FREQ CHECK value from configuration: %d\n", bias);
+	if (pr_) pr_->setFreqBoundaryCheck(check_f);
+	CheckDlgButton (ev.hWnd, IDCB_FREQ_CHECK, check_f);
 
     //
     // setup for tool bar
@@ -160,6 +165,18 @@ void AirSpyCtrlGui::DisableControls()
 
 bool AirSpyCtrlGui::ButtonClick(const GuiEvent &ev)
 {
+	// Frequency check, check box
+	if ( ev.id == IDCB_FREQ_CHECK )  {
+	    int check_f = (IsDlgButtonChecked(ev.hWnd, IDCB_FREQ_CHECK) == BST_CHECKED) ? 1 : 0;
+		LOGT("New FREQ CHECK value: %d\r\n", check_f);
+		if (!check_f) {
+			GuiError x("Experimental feature, change at your own risk !");
+			x.show();
+		}
+		if (pr_) pr_->setFreqBoundaryCheck(check_f);
+		cfg_->set< C_FREQ_C, int>(check_f);
+	}
+
 	// BIAS check box
 	if ( ev.id == IDCB_BIAS_TEE )  {
 	    int bias = (IsDlgButtonChecked(ev.hWnd, IDCB_BIAS_TEE) == BST_CHECKED) ? 1 : 0;
