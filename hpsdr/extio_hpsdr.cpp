@@ -65,7 +65,7 @@ GuiHpsdr * ExtioHermesRadio<ST>::CreateGui(int sr)
 
 void ExtioEthernet::FatalError(const char *pMsg) 
 { 
-	LOGT("%s\n", "**** FATAL ERROR *****");
+	LOGT("%s: %s\n", "**** FATAL ERROR *****", pMsg);
 
 	if (peio_->pGui) {
 		peio_->pGui->setHw(pMsg);

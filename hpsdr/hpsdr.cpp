@@ -561,7 +561,6 @@ void	Ethernet :: startReceive (struct Device *p)
 
 //static unsigned char input_buffer[20480];
 
-
 void* Ethernet :: receive_thread (void* arg) 
 {
 	Ethernet *pTgt = (Ethernet *)arg;
@@ -569,20 +568,22 @@ void* Ethernet :: receive_thread (void* arg)
 	struct sockaddr_in addr;
 	int length;
 	int bytes_read;
-	
-	const char *p_fatal_error = 0;
+	static       char p_fatal_error [512] = { 0 };
 	static const char *sync_err = "synch error";
 	static const char *unexp_pt = "unexpected packet type";
 	static const char *exiting = "exiting...";
 	static const char *unexp_eplen = "unexpected EP lenght" ;
+
 	int loop = 1;
 
 	length = sizeof(addr);
 	while (loop) {
 		bytes_read = recvfrom (pTgt->data_socket, (char *) pTgt->input_buffer, sizeof(pTgt->input_buffer), 0, (struct sockaddr*)&addr, &length);
         if(bytes_read < 0) {
-			p_fatal_error = strerror (errno);
-			LOGT("recvfrom socket failed for receive_thread: [%s]\n", p_fatal_error);
+			if (errno) {
+				strcpy (p_fatal_error, strerror (errno));
+				LOGT("recvfrom socket failed for receive_thread: [%s]\n", p_fatal_error);
+			}
             break;
         }
 		//LOGT("RECEIVED %d bytes: from [%s]\n", bytes_read, inet_ntoa ( ((struct sockaddr_in *)&addr)->sin_addr));
@@ -602,11 +603,11 @@ void* Ethernet :: receive_thread (void* arg)
                             case 6:
                                 // process the data
 								if ( pTgt->pFlow->processFromRadio (&(pTgt->input_buffer[8])) < 0) {
-									p_fatal_error = sync_err;
+									strcpy (p_fatal_error, sync_err);
 									loop = 0;
 								}
 								if ( pTgt->pFlow->processFromRadio (&(pTgt->input_buffer[520])) < 0) {
-									p_fatal_error = sync_err;
+									strcpy (p_fatal_error, sync_err);
 									loop = 0;
 								}
                                 break;
@@ -615,7 +616,7 @@ void* Ethernet :: receive_thread (void* arg)
                                 break;
                             default:
                                 LOGT("unexpected EP %d length=%d\n", pTgt->ep, bytes_read );
-								p_fatal_error = unexp_eplen;
+								strcpy (p_fatal_error, unexp_eplen);
 								loop = 0;
                                 break;
                         }
@@ -627,7 +628,7 @@ void* Ethernet :: receive_thread (void* arg)
                     break;
                 default:
                     LOGT("unexpected packet type: 0x%02X\n", pTgt->input_buffer[2]);
-					p_fatal_error = unexp_pt;
+					strcpy (p_fatal_error, unexp_pt);
 					loop = 0;
 					break;
             }
@@ -636,7 +637,7 @@ void* Ethernet :: receive_thread (void* arg)
         }
 
     }
-	if (p_fatal_error) {
+	if (strlen(p_fatal_error)) {
 		pTgt->FatalError(p_fatal_error);
 		return (void *)p_fatal_error;
 	} else
@@ -728,10 +729,10 @@ void	Ethernet :: stopReceive  ()
 	LOGT("%s\n", "Destroying receiver thread....");
 	// destroy receiver thread
 	closesocket (data_socket);
-	pthread_join (receive_thread_id, &rc);
+	int rc_j = pthread_join (receive_thread_id, &rc);
 	data_socket = -1;
 
-	LOGT("%s\n", (char *)rc);
+	LOGT("pthread_join: %d, thread message: %s\n", rc_j, (char *)rc);
 }
 
 
