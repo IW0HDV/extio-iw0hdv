@@ -389,6 +389,15 @@ bool Ethernet :: scan_devices (ScanWatcher *psw)   // was discover()
 											(from_addr.sin_addr.s_addr>>24) & 0xFF);
 									LOGT("Radio IP address %s\n", card.ip_address);
 									card.code_version = inp_buf[9];
+									// Board_ID = 1 byte,
+									// from "Metis - How it works", 1.33, 28 Feb 2015
+									// http://svn.tapr.org/filedetails.php?repname=OpenHPSDR+Main&path=%2Ftrunk%2FMetis%2FDocumentation%2FMetis-+How+it+works_V1.33.pdf
+									// 0x00 = Metis,
+									// 0x01 = Hermes,
+									// 0x02 = Griffin,
+									// 0x04 = Angelia,
+									// 0x05 = Orion,
+									// 0x06 = Hermes_Lite
 									switch (inp_buf[10]) {
 										case 0x00:
 											snprintf (card.board_id, sizeof(card.board_id), "%s", "Metis" );
@@ -402,11 +411,17 @@ bool Ethernet :: scan_devices (ScanWatcher *psw)   // was discover()
 										case 0x04:
 											snprintf (card.board_id, sizeof(card.board_id), "%s", "Angelia" );
 											break;
+										case 0x05:
+											snprintf (card.board_id, sizeof(card.board_id), "%s", "Orion" );
+											break;
+										case 0x06:
+											snprintf (card.board_id, sizeof(card.board_id), "%s", "Hermes_Lite" );
+											break;
 										default: 
 											snprintf (card.board_id, sizeof(card.board_id), "%s", "unknown" );
 											break;
 									}       
-									LOGT("***** Board id: %s\n",    card.board_id);
+									LOGT("***** Board id: %s (%02X)\n", card.board_id, inp_buf[10]);
 									LOGT("***** version:  %1.2f\n", card.code_version /10.0);
 
 									card.b_card_ip_address = interfaces[n].b_ip_address;

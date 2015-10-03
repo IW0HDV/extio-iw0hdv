@@ -259,10 +259,12 @@ struct RadioFactory {
 		} else
 		if (strcmp(board_id, "Hermes") == 0) {
 			pExr = new (buf)ExtioHermesRadio < EXTIO_SAMPLE_TYPE >(EXTIO_NS, pCb, pCr);
+		} else
+		if ((strcmp(board_id, "Orion") == 0) || (strcmp(board_id, "Angelia") == 0)) {
+			pExr = new (buf)ExtioHermesRadio < EXTIO_SAMPLE_TYPE >(EXTIO_NS, pCb, pCr);
 		}
 		return pExr;
 	}
-
 	ExtioHpsdrRadio<EXTIO_SAMPLE_TYPE> *Pointer(const char *board_id, unsigned char *buf, CommandReceiver *pCr)
 	{
 		ExtioHpsdrRadio<EXTIO_SAMPLE_TYPE> *pExr = 0;
@@ -272,6 +274,9 @@ struct RadioFactory {
 			pExr = (ExtioMercuryRadio < EXTIO_SAMPLE_TYPE > *) buf;
 		} else
 		if (strcmp(board_id, "Hermes") == 0) {
+			pExr = (ExtioHermesRadio < EXTIO_SAMPLE_TYPE > *) buf;
+		} else
+		if ((strcmp(board_id, "Orion") == 0) || (strcmp(board_id, "Angelia") == 0)) {
 			pExr = (ExtioHermesRadio < EXTIO_SAMPLE_TYPE > *) buf;
 		}
 		return pExr;
