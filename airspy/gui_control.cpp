@@ -135,10 +135,13 @@ bool AirSpyCtrlGui::OnInit(const GuiEvent& ev)
 
 	// display serial number
 	if (pr_) {
-	    AppendWinTitle(GuiEvent(pi->hDialog, 0), " S/N ");
-        AppendWinTitle(GuiEvent(pi->hDialog, 0), pr_->get_serial());
+		AppendWinTitle(GuiEvent(pi->hDialog, 0), " S/N ");
+		AppendWinTitle(GuiEvent(pi->hDialog, 0), pr_->get_serial());
+		AppendWinTitle(GuiEvent(pi->hDialog, 0), " - ");
+		AppendWinTitle(GuiEvent(pi->hDialog, 0), pr_->version_string());
+		LOGT("Device Serial Number: %s\n",  pr_->get_serial());
+		LOGT("Device Version String: %s\n", pr_->version_string());
 	}
-	//LOGT("Device Serial Number: \n%s\n%s\n", pr_->get_serial(), "0x440464C838269F4F");
 	return true;
 }
 

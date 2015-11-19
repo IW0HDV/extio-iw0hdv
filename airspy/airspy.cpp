@@ -15,6 +15,15 @@
 #include "log.h"
 #include "airspy.hpp"
 
+
+void AirSpyRadio::get_lib_version (int &major, int &minor, int &revision)
+{
+	static airspy_lib_version_t lib_version;
+	airspy_lib_version(&lib_version);
+	major = lib_version.major_version, minor = lib_version.minor_version, revision = lib_version.revision; 
+}
+
+
 AirSpyRadio::AirSpyRadio ():
     sr_(AIRSPY_DEFAULT_SAMPLE_RATE),
     vga_gain_(5), mixer_gain_(10), lna_gain_(5),
@@ -30,6 +39,11 @@ AirSpyRadio::AirSpyRadio ():
         LOGT("airspy_init() failed: %s (%d)\n", airspy_error_name((airspy_error)result), result);
         return;
     }
+	{
+		int major, minor, revision;
+        AirSpyRadio::get_lib_version (major, minor, revision);
+	    LOGT("airspy_lib_version: %d.%d.%d\n", major, minor, revision); 
+	}
 }
 
 
@@ -280,7 +294,12 @@ const char* AirSpyRadio::board_id_name ()
 	    return "UNKNOWN";
 }
 
-
-
-
+const char* AirSpyRadio::version_string ()
+{
+	::memset (version, 0, sizeof(version));
+	if (AIRSPY_SUCCESS == ::airspy_version_string_read(device, version, sizeof(version)-1)) {
+		return version;
+	} else
+		return "UNKNOWN";
+}
 

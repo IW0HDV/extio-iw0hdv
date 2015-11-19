@@ -78,6 +78,8 @@ public:
     
     const char* board_id_name();
 	
+	static void get_lib_version (int &major, int &minor, int &revision);
+	const char* version_string ();
 	
 protected:	
 
@@ -99,7 +101,7 @@ private:
 	uint8_t *buffer;
 	int bl_;
     static int callback(airspy_transfer_t *);
-	
+    char version[256];
 };
 
 #endif
