@@ -31,7 +31,9 @@ AirSpyRadio::AirSpyRadio ():
     serial_number_val(0),
 	bs_(0),
 	buffer(0),
-	bl_(0)
+	bl_(0),
+	n_sr_(0),
+	srs_(0)
 {
 	strcpy (serial,"");
 	int result = airspy_init();
@@ -60,6 +62,7 @@ AirSpyRadio::~AirSpyRadio ()
            LOGT("airspy_close() failed: %s (%d)\n", airspy_error_name((airspy_error)result), result);
         }
     }
+	delete [] srs_;
     airspy_exit();
 	LOGT("%s\n", "~AirSpyRadio" );
 }
@@ -98,7 +101,10 @@ int AirSpyRadio::open ()
        LOGT("airspy_open() failed: %s (%d)\n", airspy_error_name((airspy_error)result), result);
 	   return -1;
     } else {
-	   return 0;
+		::airspy_get_samplerates(device, &n_sr_, 0);
+		srs_ = new uint32_t [n_sr_];
+		::airspy_get_samplerates(device, srs_, n_sr_);
+		return 0;
 	}
 }
 
@@ -301,5 +307,13 @@ const char* AirSpyRadio::version_string ()
 		return version;
 	} else
 		return "UNKNOWN";
+}
+
+const int AirSpyRadio::get_samplerate_n (int n)
+{
+	if (sr_ && n >= 0 && n < sr_)
+        return srs_[n];
+    else
+        return -1;
 }
 

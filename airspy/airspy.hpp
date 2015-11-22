@@ -78,6 +78,8 @@ public:
     
     const char* board_id_name();
 	
+	const int get_samplerate_n (int n);
+	int get_samplerates () { return n_sr_; }
 	static void get_lib_version (int &major, int &minor, int &revision);
 	const char* version_string ();
 	
@@ -102,6 +104,8 @@ private:
 	int bl_;
     static int callback(airspy_transfer_t *);
     char version[256];
+	uint32_t   n_sr_;
+	uint32_t  *srs_;
 };
 
 #endif

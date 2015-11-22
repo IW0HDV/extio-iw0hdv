@@ -51,25 +51,40 @@ AirSpyCtrlGui::~AirSpyCtrlGui ()
 
 bool AirSpyCtrlGui::OnInit(const GuiEvent& ev)
 {
-	LOGT("Event ref: %p cfg: %p\n", ev, cfg_.get());
+	LOGT("Event ref: %p\n", ev);
 
-	// sample rate combobox, there are only two sample rates available in AIRSPY receiver
-	SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)"10000000");
-	SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)"2500000");
+	// detect dynamically samplerates
+	int msr = 0;
+	if (pr_) {
+		int nsr = pr_-> get_samplerates ();
+		if (nsr > 0) {
+			for (int i = 0; i < nsr; ++i) {
+				int sr = pr_-> get_samplerate_n (i);
+				if (sr > 0) {
+					char buf [256];
+					snprintf (buf, sizeof(buf), "%d", sr);
+					SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)buf);
+					if (sr > msr) msr = sr;
+					LOGT("%d: %d %d\n", i, sr, msr);
+				}
+			}
+		}
+	} else {
+		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)"10000000");
+		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)"2500000");
+	}
 
-	int sample_rate = 2500000;
+	int sample_rate = msr > 0 ? msr : 10000000;
 	if (cfg_) {
 	    sample_rate = cfg_->get<C_SR,int>();
 	    LOGT("Sample rate from cfg(%p): %d\n", cfg_.get(), sample_rate);
-	}
 
-	if (sample_rate == 2500000) {
-        SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_SETCURSEL, 1, 0);
-		if (pr_) pr_-> set_sample_rate(sample_rate);
-    } else {
-        SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_SETCURSEL, 0, 0);
-    	if (pr_) pr_-> set_sample_rate(10000000);
+		char buf [256];
+		snprintf (buf, sizeof(buf), "%d", sample_rate);
+		int index = SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_SELECTSTRING, -1, (LPARAM)buf);
+		if (index != CB_ERR) SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_SETCURSEL, index, 0);
 	}
+	if (pr_) pr_-> set_sample_rate(sample_rate);
 		
 	// 
 	// http://msdn.microsoft.com/en-us/library/windows/desktop/bb760238%28v=vs.85%29.aspx
