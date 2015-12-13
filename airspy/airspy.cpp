@@ -291,6 +291,26 @@ int AirSpyRadio::set_rf_bias (uint8_t value)
 }
 
 
+/* Parameter value: 0..21 */
+int AirSpyRadio::set_linearity_gain (uint8_t value)
+{
+	int result = ::airspy_set_linearity_gain(device, value);
+    if( result != AIRSPY_SUCCESS ) {
+         LOGT("airspy_set_linearity_gain() failed: %s (%d)\n", airspy_error_name((airspy_error)result), result);
+    }    return (result == AIRSPY_SUCCESS ? 0 : -1);
+}
+
+
+/* Parameter value: 0..21 */
+int AirSpyRadio::set_sensitivity_gain (uint8_t value)
+{
+	int result = ::airspy_set_sensitivity_gain(device, value);
+    if( result != AIRSPY_SUCCESS ) {
+         LOGT("airspy_set_sensitivity_gain() failed: %s (%d)\n", airspy_error_name((airspy_error)result), result);
+    }    return (result == AIRSPY_SUCCESS ? 0 : -1);
+}
+
+
 const char* AirSpyRadio::board_id_name ()
 {
     uint8_t bid;

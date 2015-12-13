@@ -21,3 +21,10 @@
 #define IDC_ST_IF_GAIN_VAL                      40010
 #define IDC_ST_MIXER_GAIN_VAL                   40011
 #define IDC_ST_LNA_GAIN_VAL                     40012
+#define IDRB_MANUAL                             40013
+#define IDS_LINEARITY                           40014
+#define IDS_SENSITIVITY                         40015
+#define IDC_ST_LINEARITY                        40016
+#define IDC_ST_SENSITIVITY                      40017
+#define IDRB_LINEARITY                          40018
+#define IDRB_SENSITIVITY                        40019

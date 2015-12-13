@@ -75,9 +75,13 @@ public:
     
     /* Parameter value shall be 0=Disable BiasT or 1=Enable BiasT */
     int set_rf_bias(uint8_t value);
-    
+
+	int set_sensitivity_gain (uint8_t value);
+	int set_linearity_gain (uint8_t value);
+
+	/* utilities */
     const char* board_id_name();
-	
+
 	const int get_samplerate_n (int n);
 	int get_samplerates () { return n_sr_; }
 	static void get_lib_version (int &major, int &minor, int &revision);
