@@ -23,7 +23,7 @@
 #include "log.h"
 #include "dllmain.h"
 #include "util.h"     // for shared macro
-
+#include "git-sha1.h"
 
 #pragma data_seg (".SS_DLLMAIN")
 int Dll::instance_ SHARED = 0 ;
@@ -107,6 +107,7 @@ BOOL APIENTRY DllMain ( HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpRese
 //		LOG_OPEN("perseus", GetInstanceNumber());
 		#if defined __MINGW32__
 		LOGT("%s, module handle: %p\n", "Compiled with MinGW", pObj->GetMyHandle());
+		LOGT("git sha1: %s built on: %s\r\n", GetGitSHA1 (), " - " __DATE__ ", " __TIME__ " - ");
 		#endif
 		break;
 
