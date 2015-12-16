@@ -104,10 +104,14 @@ function(git_describe _var)
 
 	#message(STATUS "Arguments to execute_process: ${ARGN}")
 
+	#
+	# removed, at line 110: ${hash}
+	# http://brianmilco.blogspot.it/2012/11/cmake-automatically-use-git-tags-as.html
+	#
+	
 	execute_process(COMMAND
 		"${GIT_EXECUTABLE}"
 		describe
-		${hash}
 		${ARGN}
 		WORKING_DIRECTORY
 		"${CMAKE_CURRENT_SOURCE_DIR}"
