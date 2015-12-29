@@ -72,7 +72,7 @@ add_subdirectory (airspy)
 add_subdirectory (extio)
 add_subdirectory (util)
 add_subdirectory (guiutil)
-add_subdirectory (perseus)
+################add_subdirectory (perseus)
 
 
 		

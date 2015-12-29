@@ -16,7 +16,8 @@
  * @version 0.0
  * @date 2015-01-07
  */
- 
+#include <windows.h>
+
 #include "log.h"
 #include "extio_airspy.h"
 #include "gui_splashscreen.h"

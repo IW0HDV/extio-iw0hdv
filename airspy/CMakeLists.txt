@@ -10,10 +10,9 @@
 #
 
 find_library(LIBUSB10_LIBRARY
-    NAMES libusb-1.0.a
-	#PATH_SUFFIXES .a
-	PATHS c:/mingw/lib
-	NO_DEFAULT_PATH
+    NAMES usb-1.0
+	PATH_SUFFIXES .a
+	PATHS /mingw32/lib/
 )
 if (NOT LIBUSB10_LIBRARY)
 	message( FATAL_ERROR "libusb-1.0 not found")
@@ -23,10 +22,8 @@ else ()
 endif ()
 
 find_library(PTHREAD_LIBRARY
-	NAMES libpthreadGCE2.a
+	NAMES pthread.a
 	PATH_SUFFIXES .a
-	PATHS ${CMAKE_SOURCE_DIR}/../pthreads
-	NO_DEFAULT_PATH
 )
 if (NOT PTHREAD_LIBRARY)
 	message( FATAL_ERROR "pthread not found")
@@ -98,7 +95,7 @@ GENERATE_EXPORT_HEADER( extio_airspy_cmake_mgw
 # copy in selected locations 
 #
 add_custom_target(dist_airspy
-	COMMAND cp ${CMAKE_BINARY_DIR}/airspy/libextio_airspy_cmake_mgw.dll /c/Users/andrew/HDSDR_270/extio_airspy_cmake_mgw.dll
-	COMMAND cp ${CMAKE_BINARY_DIR}/airspy/libextio_airspy_cmake_mgw.dll /c/Users/andrew/Studio1_1.6/extio_airspy_cmake_mgw.dll
+	COMMAND cp ${CMAKE_BINARY_DIR}/airspy/libextio_airspy_cmake_mgw.dll /c/Users/Public/HDSDR/extio_airspy_cmake_mgw64.dll
+	####COMMAND cp ${CMAKE_BINARY_DIR}/airspy/libextio_airspy_cmake_mgw.dll /c/Users/Public/Studio1_1.6/extio_airspy_cmake_mgw.dll
 )
 

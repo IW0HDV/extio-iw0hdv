@@ -20,11 +20,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+
+
+
 #include "iqconverter_int16.h"
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
+#if defined(__MINGW64_VERSION_MAJOR)
+  #include <malloc.h>
+  #define _aligned_malloc __mingw_aligned_malloc
+  #define _aligned_free  __mingw_aligned_free
+  #define FIR_STANDARD
+#elif defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
   #include <malloc.h>
   #define _aligned_malloc __mingw_aligned_malloc
   #define _aligned_free  __mingw_aligned_free

@@ -19,9 +19,9 @@
 #include <typeinfo>
 #include <iostream>
 
+#include "dllmain.h"
 #define _DONT_DECLARE_TEMPLATE_
 #include "log.h"
-#include "dllmain.h"
 #include "util.h"     // for shared macro
 
 
@@ -105,8 +105,11 @@ BOOL APIENTRY DllMain ( HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpRese
 		}
 // LOG_OPEN moved to derived class ProcessAttach method
 //		LOG_OPEN("perseus", GetInstanceNumber());
-		#if defined __MINGW32__
-		LOGT("%s, module handle: %p\n", "Compiled with MinGW", pObj->GetMyHandle());
+
+		#if defined __MINGW64_VERSION_MAJOR && defined __MINGW64_VERSION_MINOR
+		LOGT("Compiled with MinGW64 %d.%d, module handle: %p\n", __MINGW64_VERSION_MAJOR, __MINGW64_VERSION_MINOR, pObj->GetMyHandle());
+		#elif defined __MINGW32__ && !defined (__MINGW64_VERSION_MAJOR)
+		LOGT("%s, module handle: %p\n", "Compiled with MinGW32", pObj->GetMyHandle());
 		#endif
 		break;
 

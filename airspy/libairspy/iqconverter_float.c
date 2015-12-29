@@ -26,7 +26,12 @@ THE SOFTWARE.
 
 #include <stdio.h>
 
-#if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
+#if defined (__MINGW64_VERSION_MAJOR)
+  #include <malloc.h>
+  #define _aligned_malloc __mingw_aligned_malloc
+  #define _aligned_free  __mingw_aligned_free
+  #define FIR_STANDARD
+#elif defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
   #include <malloc.h>
   #define _aligned_malloc __mingw_aligned_malloc
   #define _aligned_free  __mingw_aligned_free
@@ -46,11 +51,13 @@ THE SOFTWARE.
   #define FIR_STANDARD
   //#define FIR_AUTO_VECTOR
 #else
-	#if (_MSC_VER >= 1300)
-		#define FIR_USE_SSE2
-		#include <immintrin.h>
-	#endif
+       #if (_MSC_VER >= 1300)
+               #define FIR_USE_SSE2
+               #include <immintrin.h>
+       #endif
 #endif
+
+
 
 #define SIZE_FACTOR 2
 #define DEFAULT_ALIGNMENT 16

@@ -10,10 +10,10 @@
 #
 
 find_library(PTHREAD_LIBRARY
-    NAMES libpthreadGC2.a
+    NAMES pthread
 	PATH_SUFFIXES .a
-	PATHS ${CMAKE_SOURCE_DIR}/../pthreads
-	NO_DEFAULT_PATH
+	#PATHS ${CMAKE_SOURCE_DIR}/../pthreads
+	#NO_DEFAULT_PATH
 )
 if (NOT PTHREAD_LIBRARY)
 	message( FATAL_ERROR "pthread not found")

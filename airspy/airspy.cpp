@@ -9,6 +9,7 @@
  * @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
  */
 
+#include <string.h>
 #include <memory.h>
 #include <algorithm>
 #include <airspy.h>
