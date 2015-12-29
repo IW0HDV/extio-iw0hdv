@@ -1,0 +1,76 @@
+1. Installing the environment for MinGW-w64-i686-cmake
+
+I installed the MynGW-w64 starting from MSYS2
+
+http://sourceforge.net/projects/msys2/
+
+I followed this procedure (http://stackoverflow.com/questions/30069830/how-to-install-mingw-w64-and-msys2):
+
+a. Download MSYS2 from this page (choose 32 or 64-bit according to what 
+   version of Windows you are going to use it on, not what kind of 
+   executables you want to build, both versions can build both 32 and 64-bit binaries).
+   
+b. Use c:\msys64 as main installation directory
+
+c. After the install completes, click on the newly created "MSYS2 Shell" 
+   option under either MSYS2 64-bit or MSYS2 32-bit in the Start menu. 
+   Update MSYS2 according to the wiki (http://sourceforge.net/p/msys2/wiki/MSYS2%20installation/) 
+   (although I just do a pacman -Syu), 
+   ignore all errors and close the window and open a new one, 
+   this is not recommended and you should do what the wiki page says).
+
+d. Install a toolchain:
+
+   a) for 32-bit:
+
+    pacman -S --needed --noconfirm mingw-w64-i686-gcc
+    pacman -S --needed --noconfirm mingw-w64-i686-toolchain
+    pacman -S --needed --noconfirm mingw-w64-i686-zlib mingw-w64-i686-cmake
+    pacman -S --needed --noconfirm mingw-w64-i686-libusb
+ 	
+   b) for 64-bit:
+
+    pacman -S --needed --noconfirm mingw-w64-x86_64-gcc
+    pacman -S --needed --noconfirm mingw-w64-x86_64-toolchain
+	pacman -S --needed --noconfirm mingw-w64-x86_64-zlib mingw-w64-x86_64-cmake
+	pacman -S --needed --noconfirm mingw-w64-x86_64-libusb
+	 
+	 
+e. Install the further tools needed from the "MSYS2 Shell":
+   
+    pacman -S --needed --noconfirm autoconf
+    pacman -S --needed --noconfirm git
+
+
+
+2. Build the software
+
+Below the procedure used for 32 bit build is described (again, please note 
+that "32 bit" in this context means that the executables produced are 32 bit.
+
+2.1 Open a Win32 session
+    In "All Program" , "MSYS2 64 bit" submenu click on "MinGW-w64 Win32 Shell"
+    
+2.2 Check whether the prompt reports MINGW32: 	
+	user_name@machine_name MINGW32 ~
+	
+2.3 Extract the source
+    git clone https://github.com/amontefusco/extio-iw0hdv.git
+	
+2.4 Build it	
+    cd extio-iw0hdv
+	git checkout mingw64
+	mkdir build && cd build
+	cmake ../ -G "MSYS Makefiles" && make
+
+2.5 the executables are found in build/airspy build/hpsdr build/perseus, copy them in the Studio1/HDSDR directory 
+    removing the leading prefix "lib" 
+	
+	
+	
+3. Known issues:
+
+3.1 git gui is not working as is: for remediation see http://sourceforge.net/p/msys2/discussion/general/thread/1bf2e8a6/
+
+3.2 for reasons still unknown, the executables produced don't work on Windows XP
+
