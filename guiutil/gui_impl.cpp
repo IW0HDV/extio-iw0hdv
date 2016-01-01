@@ -98,8 +98,8 @@ BOOL GuiImpl::CtrlBoxDlgProcOnCommand (
 BOOL GuiImpl::CtrlBoxDlgProcOnInit(HWND hDlg, HWND hFocus, LPARAM lParam)
 {
 	LOGT("%08x\n", lParam);
-	Gui *pGui = (Gui *)lParam;
-	LOGT("********************************* Gui addr: %p\n", pGui);
+	//Gui *pGui = (Gui *)lParam;
+	LOGT("********************************* Gui addr: %p\n", (Gui *)lParam);
 
 	return TRUE;
 }
