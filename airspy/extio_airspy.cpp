@@ -28,13 +28,13 @@ ExtIODll ExtIODll::singleton;
 
 ExtIODll :: ExtIODll (): Extio(0) 
 {
-	fprintf (stderr, "%s\n", "ExtioDll AirSpy DEFAULT ctor");
+	//fprintf (stderr, "%s\n", "ExtioDll AirSpy DEFAULT ctor");
     Dll::Register (this);	
 }
 	
 ExtIODll :: ~ExtIODll ()
 {
-	fprintf (stderr, "%s\n", "ExtioDll Airspy dctor");
+	//fprintf (stderr, "%s\n", "ExtioDll Airspy dctor");
 }
 
 
