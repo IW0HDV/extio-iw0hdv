@@ -40,7 +40,7 @@
 
 Extio::Extio (HMODULE h): Dll(h), extioCallback(0) 
 {
-	LOGT("%s\n", "ctor");
+	//LOGT("%s\n", "ctor");
 }
 
 // static member of Extio base class

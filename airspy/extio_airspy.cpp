@@ -28,13 +28,13 @@ ExtIODll ExtIODll::singleton;
 
 ExtIODll :: ExtIODll (): Extio(0) 
 {
-	fprintf (stderr, "%s\n", "ExtioDll AirSpy DEFAULT ctor");
+	//fprintf (stderr, "%s\n", "ExtioDll AirSpy DEFAULT ctor");
     Dll::Register (this);	
 }
 	
 ExtIODll :: ~ExtIODll ()
 {
-	fprintf (stderr, "%s\n", "ExtioDll Airspy dctor");
+	//fprintf (stderr, "%s\n", "ExtioDll Airspy dctor");
 }
 
 
@@ -58,12 +58,12 @@ bool ExtIODll::InitHW(char *name, char *model, int & extio_type)
 		if  (pExr == 0 || !pExr->status()) {
 			pSplash->SetStatus("Unable to find receiver ! [%s]", pExr ? pExr->last_error() : "");
 			pSplash->Show();
-			LOGT("%s\n", "Error creating instance.");
+			LOGT("%s%s\n", "Error creating instance: ", pExr ? pExr->last_error() : "");
 			return false;
 		}
 	}
 
-	strcpy(name, "AIRSPY");
+	strcpy(name, "AIRSPY-IW0HDV");
 	strcpy(model, "A" ); 
 	return extio_type_.dummy;
 }
