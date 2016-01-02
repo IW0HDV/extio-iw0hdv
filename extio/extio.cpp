@@ -40,7 +40,10 @@
 
 Extio::Extio (HMODULE h): Dll(h), extioCallback(0) 
 {
-	LOGT("%s\n", "ctor");
+	// don't put any C runtime related operation here
+	// as it is not going to be honored if and object of this class is
+	// declared as static / singleton
+	//fprintf (stderr, "%s\n", "ctor"); fflush (stderr);
 }
 
 // static member of Extio base class
@@ -148,7 +151,7 @@ EXTIO_API void __stdcall HideGUI()
 }
 
 
-#if 0 // not currently used not needed with HPSDR hardware
+#if 0 // not currently used not needed with HPSDR/AirSpy/Perseus hardware
 extern "C"
 EXTIO_API void __stdcall IFLimitsChanged (long low, long high)
 {

@@ -93,22 +93,27 @@ BOOL APIENTRY DllMain ( HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpRese
 		} else 
 			pObj->SetHModule(hModule);
 
+		// LOG_OPEN moved to derived class ProcessAttach method
+		LOG_OPEN(pObj->name(), 1);
+
 		#if CONSOLE
 		std::cerr << "OBJECT: [" << pObj << "] (" << typeid(*pObj).name() << ")" << "\n";
+		std::cerr << "----------------------------" << "\n";
 		#endif
 		
 		if (pObj) {
 			pObj->inc ();
+			std::cerr << "1111111111111111111111111111111111111111" << "\n";
 			pObj->ProcessAttach ();
+			std::cerr << "2222222222222222222222222222222222222222" << "\n";
 		} else {
 			fprintf (stderr, "FATAL: unable to create derived class object\n");
 		}
-// LOG_OPEN moved to derived class ProcessAttach method
-//		LOG_OPEN("perseus", GetInstanceNumber());
 		#if defined __MINGW32__
 		LOGT("%s, module handle: %p\n", "Compiled with MinGW", pObj->GetMyHandle());
 		LOGT("git sha1: %s built on: %s\r\n", GetGitSHA1 (), " - " __DATE__ ", " __TIME__ " - ");
 		#endif
+		std::cerr << "333333333333333333333333333333333333333333333" << "\n";
 		break;
 
 	case DLL_THREAD_ATTACH:

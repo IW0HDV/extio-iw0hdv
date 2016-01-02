@@ -320,6 +320,8 @@ public:
 	virtual void ShowGUI(void);
 	virtual void HideGUI(void);
 	
+	virtual const char *name() { return "HPSDR-I0HDV"; }
+
 	// pointers to abstract types
 	Radio  *pR;
 	ExtioHpsdrRadio < EXTIO_SAMPLE_TYPE > *pExr;

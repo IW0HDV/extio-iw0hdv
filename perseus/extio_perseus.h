@@ -175,10 +175,7 @@ class ExtIODll : public Extio {
 
 public:
 
-	void ProcessAttach() 
-	{ 
-		LOG_OPEN("perseus", GetInstanceNumber());
-	}
+	void ProcessAttach() {}
 	void ProcessDetach() 
 	{ 
 		CloseHW();  // force radio hardware close 
@@ -202,6 +199,8 @@ public:
 	virtual void ShowGUI(void);
 	virtual void HideGUI(void);
 	
+	virtual const char *name() { return "PERSEUS-I0HDV"; }
+
 	// main radio object pointer
     PEXTPRADIO<EXTIO_BASE_TYPE> pExr;
 	

@@ -58,12 +58,12 @@ bool ExtIODll::InitHW(char *name, char *model, int & extio_type)
 		if  (pExr == 0 || !pExr->status()) {
 			pSplash->SetStatus("Unable to find receiver ! [%s]", pExr ? pExr->last_error() : "");
 			pSplash->Show();
-			LOGT("%s\n", "Error creating instance.");
+			LOGT("%s%s\n", "Error creating instance: ", pExr ? pExr->last_error() : "");
 			return false;
 		}
 	}
 
-	strcpy(name, "AIRSPY");
+	strcpy(name, this->name());
 	strcpy(model, "A" ); 
 	return extio_type_.dummy;
 }

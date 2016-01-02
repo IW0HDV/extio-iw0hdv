@@ -146,7 +146,7 @@ public:
 	
 	void ProcessAttach() 
 	{ 
-		LOG_OPEN("airspy", GetInstanceNumber());
+		//LOG_OPEN("airspy", GetInstanceNumber());
 	}
 	void ProcessDetach() 
 	{ 
@@ -172,6 +172,8 @@ public:
 	virtual void ShowGUI(void);
 	virtual void HideGUI(void);
 	
+	virtual const char *name() { return "AIRSPY-I0HDV"; }
+
 private:
 
 	// GUI
