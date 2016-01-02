@@ -175,14 +175,6 @@ class ExtIODll : public Extio {
 
 public:
 
-	void ProcessAttach() {}
-	void ProcessDetach() 
-	{ 
-		CloseHW();  // force radio hardware close 
-	}
-	void ThreadAttach() {}
-	void ThreadDetach() {}
-	
 	virtual bool InitHW(char *name, char *model, int& extio_type);
 	virtual bool OpenHW(void);
 	virtual void CloseHW(void);

@@ -195,7 +195,7 @@ void ExtIODll::ProcessAttach()
 		}
 };
 
-// on detaching, close the radio hardware (it should be done form the client DSP program)
+// on detaching, close the radio hardware (it should be already done from the client DSP program)
 // and close (cleanup) the Windows Sockets API (WSA)
 void ExtIODll::ProcessDetach() 
 {

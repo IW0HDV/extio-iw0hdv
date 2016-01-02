@@ -51,10 +51,7 @@ public:
 class ExtIODll : public Extio {
 public:
 	
-	void ProcessAttach() 
-	{ 
-		LOG_OPEN("test", GetInstanceNumber());
-	}
+	void ProcessAttach() { 	}
 	void ProcessDetach() 
 	{ 
 		LOGT("Process_Detach: instance: %d\n", GetInstanceNumber());
