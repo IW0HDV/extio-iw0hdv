@@ -68,7 +68,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
 #	-DCONSOLE
 #
     set(cxxflags             "-static-libgcc -static-libstdc++ "                   )
-	set(cxxflags "${cxxflags} -DCONSOLE" )
+#	set(cxxflags "${cxxflags} -DCONSOLE" )
 	set(cxxflags "${cxxflags} -DFLOG" )
 	set(cxxflags "${cxxflags} -DNDEBUG" )
 	set(cxxflags "${cxxflags} -DPTW32_STATIC_LIB -D__CLEANUP_CXX" )
