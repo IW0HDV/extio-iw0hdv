@@ -42,6 +42,20 @@ get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 #### add_definitions("-DGIT_SHA1=${GIT_SHA1}")
 
 #
+# parse the version information into pieces.
+#
+# http://brianmilco.blogspot.it/2012/11/cmake-automatically-use-git-tags-as.html
+#
+git_describe(VERSION --tags --dirty=-dirty --always)
+string(REGEX REPLACE "^v([0-9]+)\\..*" "\\1" VERSION_MAJOR "${VERSION}")
+string(REGEX REPLACE "^v[0-9]+\\.([0-9]+).*" "\\1" VERSION_MINOR "${VERSION}")
+string(REGEX REPLACE "^v[0-9]+\\.[0-9]+\\.([0-9]+).*" "\\1" VERSION_PATCH "${VERSION}")
+string(REGEX REPLACE "^v[0-9]+\\.[0-9]+\\.[0-9]+(.*)" "\\1" VERSION_SHA1 "${VERSION}")
+set(VERSION_SHORT "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+
+
+
+#
 # compiler detection
 # and parameters assignments
 #
@@ -54,7 +68,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
 #	-DCONSOLE
 #
     set(cxxflags             "-static-libgcc -static-libstdc++ "                   )
-#	set(cxxflags "${cxxflags} -DCONSOLE" )
+	set(cxxflags "${cxxflags} -DCONSOLE" )
 	set(cxxflags "${cxxflags} -DFLOG" )
 	set(cxxflags "${cxxflags} -DNDEBUG" )
 	set(cxxflags "${cxxflags} -DPTW32_STATIC_LIB -D__CLEANUP_CXX" )
@@ -78,6 +92,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/util)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/extio)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/guiutil)
 
+add_subdirectory (test)
 add_subdirectory (airspy)
 add_subdirectory (hpsdr)
 add_subdirectory (extio)

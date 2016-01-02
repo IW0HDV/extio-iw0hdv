@@ -6,7 +6,7 @@
 #include <commctrl.h>
 #include <richedit.h>
 #include "perseusw.h"
-
+#include "../util/git-raw.h"
 
 
 
@@ -76,5 +76,22 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
     FILEFLAGSMASK   0x00000000
     FILEFLAGS       0x00000000
 {
-    
+    BLOCK "StringFileInfo"
+    {
+        BLOCK "040904B0"
+        {
+            VALUE "FileDescription", GIT_SHA1
+            VALUE "FileVersion", ""
+            VALUE "InternalName", "Built with libperseus-sdr library (C) 2011-2015 Microtelecom"
+            VALUE "LegalCopyright", "Copyright (C) 2015 Andrea Montefusco"
+            VALUE "OriginalFilename", "extio_perseus_cmake_mgw.dll"
+            VALUE "ProductName", "IW0HDV PERSEUS EXTIO"
+            VALUE "ProductVersion", GIT_VERSION GIT_PATCH_SHA1
+            VALUE "Comments", "For more information visit http://www.montefusco.com/perseus\0"
+        }
+    }
+    BLOCK "VarFileInfo"
+    {
+        VALUE "Translation", 0x0409, 0x04B0
+    }    
 }
