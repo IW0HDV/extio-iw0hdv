@@ -199,7 +199,6 @@ void ExtIODll::ProcessAttach()
 // and close (cleanup) the Windows Sockets API (WSA)
 void ExtIODll::ProcessDetach() 
 {
-	CloseHW(); 
 	WSACleanup();
 };
 
