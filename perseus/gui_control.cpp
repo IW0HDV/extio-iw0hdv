@@ -58,11 +58,12 @@ bool PerseusCtrlGui::OnInit(const GuiEvent& ev)
 	LOGT("Event ref: %p\n", ev);
 	
 	int sample_rate =  PERSEUS_DEFAULT_SAMPLE_RATE;
+	// retrieve from configuration file the last selected sample rate
 	if (cfg_) {
 	    sample_rate = cfg_->get<C_SR,int>();
 	    LOGT("Sample rate from cfg(%p): %d\n", cfg_.get(), sample_rate);
 	}
-	
+	// retrieve from radio all sample rates supported and fill in the drop down list
 	if (pr_) {
 		std::vector <int> v = pr_->get_sample_rate_v();
         for (std::vector<int>::iterator it = v.begin() ; it != v.end(); ++it) {
@@ -72,7 +73,8 @@ bool PerseusCtrlGui::OnInit(const GuiEvent& ev)
 			SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)buf);
 			if (sample_rate == *it) SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_SETCURSEL, std::distance(v.begin(), it), 0);
         }
-    }
+		pr_->set_sample_rate (sample_rate); // select the current sample rate in hardware
+	}
 	
 	// populate attenuator drop box
 	SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_ATT), CB_ADDSTRING, 0, (LPARAM)"0 dB");
