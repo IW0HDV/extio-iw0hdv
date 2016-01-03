@@ -6,7 +6,7 @@
 #include <commctrl.h>
 #include <richedit.h>
 #include "airspyw.h"
-#include "../util/git-raw.h"
+#include <git-raw.h>
 
 
 

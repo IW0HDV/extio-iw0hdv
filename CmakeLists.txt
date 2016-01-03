@@ -91,6 +91,7 @@ set(CMAKE_SHARED_LINKER_FLAGS "${shared_lib_cxxflags}")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/util)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/extio)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/guiutil)
+include_directories(${CMAKE_BINARY_DIR}/util) ## needed for git-raw.h inclusion in .rc
 
 add_subdirectory (test)
 add_subdirectory (airspy)
