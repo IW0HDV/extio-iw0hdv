@@ -10,30 +10,27 @@
 #
 
 find_library(PERSEUS_SDR_LIBRARY
-	NAMES libperseus-sdr.a
-	#PATH_SUFFIXES .a
-    PATHS c:/mingw/lib
-	NO_DEFAULT_PATH
-
+	NAMES perseus-sdr
+	PATH_SUFFIXES .a
+	PATHS /mingw32/lib
 )
 if (NOT PERSEUS_SDR_LIBRARY)
 	message( FATAL_ERROR "perseus lib not found")
 else ()
-	#message ( "libperseus-sdr found: "  ${PERSEUS_SDR_LIBRARY} )	
-	##set (XXX_LIB_P ${PERSEUS_SDR_LIBRARY})
+	message ( "libperseus-sdr found: "  ${PERSEUS_SDR_LIBRARY} )	
+	link_libraries (${PERSEUS_SDR_LIBRARY})
 endif ()
  
 find_library(LIBUSB10_LIBRARY
-    NAMES libusb-1.0.a
-	#PATH_SUFFIXES .a
-	PATHS c:/mingw/lib
-	NO_DEFAULT_PATH
+    NAMES usb-1.0
+	PATH_SUFFIXES .a
+	PATHS /mingw32/lib/
 )
 if (NOT LIBUSB10_LIBRARY)
 	message( FATAL_ERROR "libusb-1.0 not found")
 else ()
-	#message ( "libusb-1.0 found: "  ${LIBUSB10_LIBRARY})
-	#link_libraries(${LIBUSB10_LIBRARY})
+	#message ( "*************** libusb-1.0 found: "  ${LIBUSB10_LIBRARY})
+	link_libraries(${LIBUSB10_LIBRARY})
 endif ()
 
 include_directories(.)

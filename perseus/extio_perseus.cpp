@@ -17,6 +17,8 @@
  * @date 2013-09-23
  */
 
+#include <windows.h>
+
 #include "log.h"
 #include "extio_perseus.h"
 #include "gui_splashscreen.h"
