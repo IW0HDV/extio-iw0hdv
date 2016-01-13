@@ -17,7 +17,7 @@ struct PRimpl {
 	
 	PRimpl ():num_perseus(0),descr(0)
 	{
-		memset (&prodid, sizeof(prodid), 0);
+		memset (&prodid, 0, sizeof(prodid));
 	}
 	int num_perseus;
 	perseus_descr *descr;
