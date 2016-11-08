@@ -38,8 +38,8 @@ endif ()
  
 include_directories(.)
 
-include_directories(libairspy-1.0.7)
-add_subdirectory (libairspy-1.0.7)
+include_directories(libairspy-1.0.9)
+add_subdirectory (libairspy-1.0.9)
 
 
 #
@@ -65,7 +65,7 @@ SET(AIRSPY_SRCS
 link_libraries(extiobase)
 link_libraries(util)
 link_libraries(guiutil)
-link_libraries(libairspy-1.0.7)
+link_libraries(libairspy-1.0.9)
 
 add_library(extio_airspy_cmake_mgw SHARED ${AIRSPY_SRCS} )
 
