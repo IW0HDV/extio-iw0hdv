@@ -25,7 +25,7 @@ void AirSpyRadio::get_lib_version (int &major, int &minor, int &revision)
 
 
 AirSpyRadio::AirSpyRadio ():
-    sr_(AIRSPY_DEFAULT_SAMPLE_RATE),
+    sr_(-1),
     vga_gain_(5), mixer_gain_(10), lna_gain_(5),
 	device(0),
     serial_number_val(0),
@@ -149,22 +149,10 @@ int AirSpyRadio::stop ()
 
 int AirSpyRadio::set_sample_rate (int nsr)
 {
-    airspy_samplerate_t as_nsr;
-	switch (nsr) {
-	case 10000000:
-	    as_nsr = AIRSPY_SAMPLERATE_10MSPS;
-		sr_ = nsr;
-	    break;
-	case 2500000:
-	    as_nsr = AIRSPY_SAMPLERATE_2_5MSPS;
-		sr_ = nsr;
-	    break;
-	default:
-	    return -1;
-	}
-	int result = airspy_set_samplerate(device, as_nsr);
+	sr_ = nsr;
+	int result = airspy_set_samplerate(device, sr_);
     if( result != AIRSPY_SUCCESS ) {
-        LOGT("airspy_set_samplerate() failed: %s (%d)\n", airspy_error_name((airspy_error)result), result);
+        LOGT("airspy_set_samplerate(%d) failed: %s (%d)\n", sr_, airspy_error_name((airspy_error)result), result);
 		return -1;
     } else
 	    return 0;
@@ -172,7 +160,8 @@ int AirSpyRadio::set_sample_rate (int nsr)
 
 int AirSpyRadio::get_sample_rate ()
 {
-    return sr_;
+	LOGT("airspy_get_samplerate: (%d)\n", sr_);
+	return sr_;
 }
 
 
@@ -331,7 +320,7 @@ const char* AirSpyRadio::version_string ()
 
 const int AirSpyRadio::get_samplerate_n (int n)
 {
-	if (sr_ && n >= 0 && n < sr_)
+	if (n_sr_ && n >= 0 && n < n_sr_)
         return srs_[n];
     else
         return -1;

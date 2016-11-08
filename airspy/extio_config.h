@@ -28,9 +28,4 @@ const int EXTIO_NS = 8192;
 // size of ExtIO sample type
 enum { EXTIO_BASE_TYPE_SIZE = sizeof(typename EXTIO_BASE_TYPE::sample_type) }; 
 
-// starting sampling rate
-const int EXTIO_DEFAULT_SAMPLE_RATE = AIRSPY_DEFAULT_SAMPLE_RATE;	
-
-
-
 #endif

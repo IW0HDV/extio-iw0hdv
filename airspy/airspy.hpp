@@ -22,7 +22,6 @@ struct AirSpyRxIQSample {
 	}
 };
 
-const int AIRSPY_DEFAULT_SAMPLE_RATE = 2500000;
 const int AIRSPY_DEFAULT_FREQUENCY = 103500000;
 
 
