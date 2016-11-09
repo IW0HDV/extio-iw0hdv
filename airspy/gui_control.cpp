@@ -38,7 +38,7 @@ AirSpyCtrlGui::AirSpyCtrlGui(PEXTPRADIO<EXTIO_BASE_TYPE> &pr):
 	
 	if (pr_) fn += pr_->get_serial();
 	
-	cfg_.reset ( new Config<AIRSPY_CFG_T>((fn+".txt").c_str(), std::make_tuple(2500000, 5, 10, 6, 0, 0, 0, 10, 10, S_MAN)) );
+	cfg_.reset ( new Config<AIRSPY_CFG_T>((fn+".txt").c_str(), std::make_tuple(-1, 5, 10, 6, 0, 0, 0, 10, 10, S_MAN)) );
 
 	LOGT("******* AirSpyCtrlGui: pImpl: %p Gui addr: %p Cfg: %p, (%s)\n", pi, this, cfg_.get(), fn.c_str());
 
@@ -54,38 +54,39 @@ bool AirSpyCtrlGui::OnInit(const GuiEvent& ev)
 	LOGT("Event ref: %p\n", ev);
 
 	// detect dynamically samplerates
-	int msr = 0;
-	if (pr_) {
-		int nsr = pr_-> get_samplerates ();
-		if (nsr > 0) {
-			for (int i = 0; i < nsr; ++i) {
-				int sr = pr_-> get_samplerate_n (i);
-				if (sr > 0) {
-					char buf [256];
-					snprintf (buf, sizeof(buf), "%d", sr);
-					SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)buf);
-					if (sr > msr) msr = sr;
-					LOGT("%d: %d %d\n", i, sr, msr);
-				}
+	int nsr;
+	if ( pr_ && (nsr = pr_-> get_samplerates ()) ) {
+		char buf [256];
+
+		// fill the drop down box in GUI with all sample rates available from hardware
+		for (int i = 0; i < nsr; ++i) {
+			int sr = pr_-> get_samplerate_n (i);
+			LOGT("%d: %d\n", i, sr);
+			if (sr > 0) {
+				snprintf (buf, sizeof(buf), "%d", sr);
+				SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)buf);
+			}
+		}
+		if (cfg_) {
+			// read sample rate from configuration file
+			int sample_rate = cfg_->get<C_SR,int>();
+
+			LOGT("Sample rate from cfg(%p): %d\n", cfg_.get(), sample_rate);
+			// convert to string
+			snprintf (buf, sizeof(buf), "%d", sample_rate);
+
+			int index = SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_SELECTSTRING, -1, (LPARAM)buf);
+			if (index != CB_ERR) {
+				SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_SETCURSEL, index, 0);
+				if (pr_) pr_-> set_sample_rate(sample_rate);
+			} else {
+				snprintf (buf, sizeof(buf), "Sample rate %d not available in hardware", sample_rate);
+				SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)buf );
 			}
 		}
 	} else {
-		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)"10000000");
-		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)"2500000");
+		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)"Internal error, no sample rate avail");
 	}
-
-	int sample_rate = msr > 0 ? msr : 10000000;
-	if (cfg_) {
-	    sample_rate = cfg_->get<C_SR,int>();
-	    LOGT("Sample rate from cfg(%p): %d\n", cfg_.get(), sample_rate);
-
-		char buf [256];
-		snprintf (buf, sizeof(buf), "%d", sample_rate);
-		int index = SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_SELECTSTRING, -1, (LPARAM)buf);
-		if (index != CB_ERR) SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_SETCURSEL, index, 0);
-	}
-	if (pr_) pr_-> set_sample_rate(sample_rate);
-		
 	// 
 	// http://msdn.microsoft.com/en-us/library/windows/desktop/bb760238%28v=vs.85%29.aspx
 	//
