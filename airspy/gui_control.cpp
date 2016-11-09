@@ -70,8 +70,16 @@ bool AirSpyCtrlGui::OnInit(const GuiEvent& ev)
 		if (cfg_) {
 			// read sample rate from configuration file
 			int sample_rate = cfg_->get<C_SR,int>();
+			// the first time the configuration file is created we don't have a valid sample rate
+			// take the first one available from the hardware
+			if (sample_rate < 0) {
+				sample_rate = pr_-> get_samplerate_n (0);
+				// save it back to config file
+				cfg_->set<C_SR,int>(sample_rate);
+			} else {
+				LOGT("Sample rate from cfg(%p): %d\n", cfg_.get(), sample_rate);
+			}
 
-			LOGT("Sample rate from cfg(%p): %d\n", cfg_.get(), sample_rate);
 			// convert to string
 			snprintf (buf, sizeof(buf), "%d", sample_rate);
 
