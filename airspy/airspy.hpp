@@ -81,7 +81,7 @@ public:
 	/* utilities */
     const char* board_id_name();
 
-	const int get_samplerate_n (int n);
+	const int get_samplerate_n (unsigned int n);
 	int get_samplerates () { return n_sr_; }
 	static void get_lib_version (int &major, int &minor, int &revision);
 	const char* version_string ();

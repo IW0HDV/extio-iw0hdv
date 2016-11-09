@@ -25,10 +25,10 @@ void AirSpyRadio::get_lib_version (int &major, int &minor, int &revision)
 
 
 AirSpyRadio::AirSpyRadio ():
-    sr_(-1),
-    vga_gain_(5), mixer_gain_(10), lna_gain_(5),
+	sr_(-1),
+	vga_gain_(5), mixer_gain_(10), lna_gain_(5),
 	device(0),
-    serial_number_val(0),
+	serial_number_val(0),
 	bs_(0),
 	buffer(0),
 	bl_(0),
@@ -119,8 +119,8 @@ int AirSpyRadio::start (int bufsize)
 	
 	set_sample_rate(sr_);
 	set_vga_gain(vga_gain_);
-    set_mixer_gain(mixer_gain_);
-    set_lna_gain(lna_gain_);
+	set_mixer_gain(mixer_gain_);
+	set_lna_gain(lna_gain_);
 	
 	result = ::airspy_start_rx(device, callback, this);
     if( result != AIRSPY_SUCCESS ) {
@@ -318,11 +318,11 @@ const char* AirSpyRadio::version_string ()
 		return "UNKNOWN";
 }
 
-const int AirSpyRadio::get_samplerate_n (int n)
+const int AirSpyRadio::get_samplerate_n (unsigned int n)
 {
 	if (n_sr_ && n >= 0 && n < n_sr_)
-        return srs_[n];
-    else
-        return -1;
+		return srs_[n];
+	else
+		return -1;
 }
 
