@@ -160,7 +160,7 @@ public:
 	virtual void ShowGUI(void);
 	virtual void HideGUI(void);
 	
-	virtual const char *name() { return "AIRSPY-I0HDV"; }
+	virtual const char *name() { return "AIRSPY-IW0HDV"; }
 
 private:
 
