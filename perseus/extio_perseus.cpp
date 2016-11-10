@@ -33,14 +33,21 @@ ExtIODll ExtIODll::singleton;
 
 ExtIODll::ExtIODll () : Extio(0)
 {
-	fprintf (stderr, "%s\n", "ExtioDll Perseus DEFAULT ctor");
+	// don't put any C runtime related operation here
+	// as it is not going to be honored if and object of this class is
+	// declared as static / singleton
+	//fprintf (stderr, "%s\n", "ExtioDll Perseus DEFAULT ctor");
+	
 	// register this instance to the Dll base class
     Dll::Register (this);	
 }
 
 ExtIODll :: ~ExtIODll ()
 {
-	fprintf (stderr, "%s\n", "ExtioDll Perseus dctor");
+	// don't put any C runtime related operation here
+	// as it is not going to be honored if and object of this class is
+	// declared as static / singleton
+	//fprintf (stderr, "%s\n", "ExtioDll Perseus dctor");
 }
 
 
@@ -67,7 +74,7 @@ bool ExtIODll::InitHW(char *name, char *model, int & extio_type)
 		}
 	}
 
-	strcpy(name, "Perseus");
+	strcpy(name, this->name());
 	strcpy(model, "The_only_done_ever" ); 
 	return extio_type_.dummy;
 }

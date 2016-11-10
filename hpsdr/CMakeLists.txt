@@ -51,11 +51,17 @@ SET(HPSDR_SRCS
 link_libraries(extiobase)
 link_libraries(util)
 link_libraries(guiutil)
-
 link_libraries(ws2_32 iphlpapi)
 
+
 add_library(extio_hpsdr_cmake_mgw SHARED ${HPSDR_SRCS} )
-## extio_hermes_mgw.def )
+target_link_libraries(extio_hpsdr_cmake_mgw ${PTHREAD_LIBRARY})
+set_target_properties(extio_hpsdr_cmake_mgw
+	PROPERTIES
+	PREFIX "" # remove the trailing standard 'lib' prefix
+	OUTPUT_NAME "extio_hpsdr_cmake_mgw-${VERSION}"
+)
+###########################################################################
 
 #message ( "CXX_CFLAGS:                "  ${CMAKE_CXX_FLAGS})			
 #message ( "CMAKE_SHARED_LINKER_FLAGS: "  ${CMAKE_SHARED_LINKER_FLAGS})			
@@ -71,7 +77,7 @@ GENERATE_EXPORT_HEADER( extio_hpsdr_cmake_mgw
 # copy in selected locations 
 #
 add_custom_target(dist_hpsdr
-	COMMAND cp ${CMAKE_BINARY_DIR}/hpsdr/libextio_hpsdr_cmake_mgw.dll /c/Users/andrew/HDSDR_270/extio_hpsdr_cmake_mgw.dll
-	COMMAND cp ${CMAKE_BINARY_DIR}/hpsdr/libextio_hpsdr_cmake_mgw.dll /c/Users/andrew/Studio1_1.6/extio_hpsdr_cmake_mgw.dll
+	COMMAND cp ${CMAKE_BINARY_DIR}/hpsdr/$<TARGET_FILE_NAME:extio_hpsdr_cmake_mgw> /c/Users/andrew/HDSDR_270/
+	COMMAND cp ${CMAKE_BINARY_DIR}/hpsdr/$<TARGET_FILE_NAME:extio_hpsdr_cmake_mgw> /c/Users/andrew/Studio1_1.6/
 )
 

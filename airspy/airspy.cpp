@@ -26,13 +26,15 @@ void AirSpyRadio::get_lib_version (int &major, int &minor, int &revision)
 
 
 AirSpyRadio::AirSpyRadio ():
-    sr_(AIRSPY_DEFAULT_SAMPLE_RATE),
-    vga_gain_(5), mixer_gain_(10), lna_gain_(5),
+	sr_(-1),
+	vga_gain_(5), mixer_gain_(10), lna_gain_(5),
 	device(0),
-    serial_number_val(0),
+	serial_number_val(0),
 	bs_(0),
 	buffer(0),
-	bl_(0)
+	bl_(0),
+	n_sr_(0),
+	srs_(0)
 {
 	strcpy (serial,"");
 	int result = airspy_init();
@@ -61,6 +63,7 @@ AirSpyRadio::~AirSpyRadio ()
            LOGT("airspy_close() failed: %s (%d)\n", airspy_error_name((airspy_error)result), result);
         }
     }
+	delete [] srs_;
     airspy_exit();
 	LOGT("%s\n", "~AirSpyRadio" );
 }
@@ -99,7 +102,10 @@ int AirSpyRadio::open ()
        LOGT("airspy_open() failed: %s (%d)\n", airspy_error_name((airspy_error)result), result);
 	   return -1;
     } else {
-	   return 0;
+		::airspy_get_samplerates(device, &n_sr_, 0);
+		srs_ = new uint32_t [n_sr_];
+		::airspy_get_samplerates(device, srs_, n_sr_);
+		return 0;
 	}
 }
 
@@ -114,8 +120,8 @@ int AirSpyRadio::start (int bufsize)
 	
 	set_sample_rate(sr_);
 	set_vga_gain(vga_gain_);
-    set_mixer_gain(mixer_gain_);
-    set_lna_gain(lna_gain_);
+	set_mixer_gain(mixer_gain_);
+	set_lna_gain(lna_gain_);
 	
 	result = ::airspy_start_rx(device, callback, this);
     if( result != AIRSPY_SUCCESS ) {
@@ -144,22 +150,10 @@ int AirSpyRadio::stop ()
 
 int AirSpyRadio::set_sample_rate (int nsr)
 {
-    airspy_samplerate_t as_nsr;
-	switch (nsr) {
-	case 10000000:
-	    as_nsr = AIRSPY_SAMPLERATE_10MSPS;
-		sr_ = nsr;
-	    break;
-	case 2500000:
-	    as_nsr = AIRSPY_SAMPLERATE_2_5MSPS;
-		sr_ = nsr;
-	    break;
-	default:
-	    return -1;
-	}
-	int result = airspy_set_samplerate(device, as_nsr);
+	sr_ = nsr;
+	int result = airspy_set_samplerate(device, sr_);
     if( result != AIRSPY_SUCCESS ) {
-        LOGT("airspy_set_samplerate() failed: %s (%d)\n", airspy_error_name((airspy_error)result), result);
+        LOGT("airspy_set_samplerate(%d) failed: %s (%d)\n", sr_, airspy_error_name((airspy_error)result), result);
 		return -1;
     } else
 	    return 0;
@@ -167,7 +161,8 @@ int AirSpyRadio::set_sample_rate (int nsr)
 
 int AirSpyRadio::get_sample_rate ()
 {
-    return sr_;
+	LOGT("airspy_get_samplerate: (%d)\n", sr_);
+	return sr_;
 }
 
 
@@ -286,6 +281,26 @@ int AirSpyRadio::set_rf_bias (uint8_t value)
 }
 
 
+/* Parameter value: 0..21 */
+int AirSpyRadio::set_linearity_gain (uint8_t value)
+{
+	int result = ::airspy_set_linearity_gain(device, value);
+    if( result != AIRSPY_SUCCESS ) {
+         LOGT("airspy_set_linearity_gain() failed: %s (%d)\n", airspy_error_name((airspy_error)result), result);
+    }    return (result == AIRSPY_SUCCESS ? 0 : -1);
+}
+
+
+/* Parameter value: 0..21 */
+int AirSpyRadio::set_sensitivity_gain (uint8_t value)
+{
+	int result = ::airspy_set_sensitivity_gain(device, value);
+    if( result != AIRSPY_SUCCESS ) {
+         LOGT("airspy_set_sensitivity_gain() failed: %s (%d)\n", airspy_error_name((airspy_error)result), result);
+    }    return (result == AIRSPY_SUCCESS ? 0 : -1);
+}
+
+
 const char* AirSpyRadio::board_id_name ()
 {
     uint8_t bid;
@@ -302,5 +317,13 @@ const char* AirSpyRadio::version_string ()
 		return version;
 	} else
 		return "UNKNOWN";
+}
+
+const int AirSpyRadio::get_samplerate_n (unsigned int n)
+{
+	if (n_sr_ && n >= 0 && n < n_sr_)
+		return srs_[n];
+	else
+		return -1;
 }
 

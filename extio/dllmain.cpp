@@ -23,7 +23,7 @@
 #define _DONT_DECLARE_TEMPLATE_
 #include "log.h"
 #include "util.h"     // for shared macro
-
+#include "git-sha1.h"
 
 #pragma data_seg (".SS_DLLMAIN")
 int Dll::instance_ SHARED = 0 ;
@@ -93,13 +93,19 @@ BOOL APIENTRY DllMain ( HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpRese
 		} else 
 			pObj->SetHModule(hModule);
 
+		// LOG_OPEN moved to derived class ProcessAttach method
+		LOG_OPEN(pObj->name(), 1);
+
 		#if CONSOLE
 		std::cerr << "OBJECT: [" << pObj << "] (" << typeid(*pObj).name() << ")" << "\n";
+		std::cerr << "----------------------------" << "\n";
 		#endif
 		
 		if (pObj) {
 			pObj->inc ();
+			std::cerr << "1111111111111111111111111111111111111111" << "\n";
 			pObj->ProcessAttach ();
+			std::cerr << "2222222222222222222222222222222222222222" << "\n";
 		} else {
 			fprintf (stderr, "FATAL: unable to create derived class object\n");
 		}
@@ -111,6 +117,7 @@ BOOL APIENTRY DllMain ( HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpRese
 		#elif defined __MINGW32__ && !defined (__MINGW64_VERSION_MAJOR)
 		LOGT("%s, module handle: %p\n", "Compiled with MinGW32", pObj->GetMyHandle());
 		#endif
+		std::cerr << "333333333333333333333333333333333333333333333" << "\n";
 		break;
 
 	case DLL_THREAD_ATTACH:

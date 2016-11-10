@@ -24,7 +24,6 @@
 #define WIN32_LEAN_AND_MEAN // Exclude rarely-used stuff from Windows headers
 #include <windows.h>
 
-//typedef HMODULE MOD_HANDLE;
 
 class Dll {
 protected:
@@ -48,6 +47,7 @@ public:
 	void SetHModule(HMODULE hm) { hMod = hm; }
 	static int GetInstanceNumber ();
 	static int GetInstanceQuantity () ;
+	virtual const char *name() { return ""; }
 
 private:
 	Dll() = delete;

@@ -27,6 +27,7 @@
 #endif
 
 #include "util.h"
+#include "git-sha1.h"
 #include "log.h"
 #include "guievent.h"
 #include "guiutil.h"
@@ -44,6 +45,9 @@ AirSpySplash::AirSpySplash(Gui **p, CommandReceiver **ppCr):
 bool AirSpySplash::OnInit(const GuiEvent& ev)
 {
 	AppendWinTitle(GuiEvent(pi->hDialog, 0), getBuildString());
+	AppendWinTitle(GuiEvent(pi->hDialog, 0), "-");
+	AppendWinTitle(GuiEvent(pi->hDialog, 0), GetGitSHA1 ());
+	
 	SetStatus ("%s", "");
 	return true;
 }

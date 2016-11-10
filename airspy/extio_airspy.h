@@ -144,18 +144,6 @@ template <class ST> using PEXTPRADIO = std::shared_ptr < ExtioAirSpyRadio<ST> > 
 class ExtIODll : public Extio {
 public:
 	
-	void ProcessAttach() 
-	{ 
-		LOG_OPEN("airspy", GetInstanceNumber());
-	}
-	void ProcessDetach() 
-	{ 
-		LOGT("Process_Detach: instance: %d\n", GetInstanceNumber());
-		CloseHW();  // force radio hardware close 
-	}
-	void ThreadAttach() {}
-	void ThreadDetach() {}
-	
 	virtual bool InitHW(char *name, char *model, int& extio_type);
 	virtual bool OpenHW(void);
 	virtual void CloseHW(void);
@@ -172,6 +160,8 @@ public:
 	virtual void ShowGUI(void);
 	virtual void HideGUI(void);
 	
+	virtual const char *name() { return "AIRSPY-IW0HDV"; }
+
 private:
 
 	// GUI

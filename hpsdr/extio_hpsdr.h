@@ -297,12 +297,11 @@ class CommandReceiver;
 
 class ExtIODll : public Extio {
 public:
-//	ExtIODll(HMODULE h): Extio(h), pR(0), pExr(0), pGui(0), pExtioEth(0), pCmdRec(0), rxIQ(0) {}
+
    	ExtIODll();
-	void ProcessAttach();
-	void ProcessDetach();
-	void ThreadAttach() {};
-	void ThreadDetach() {};
+	void ProcessAttach(); // when the process attach the DLL, initialize the Windows Sockets API (WSA)
+	void ProcessDetach(); // on detaching, close the radio hardware (it should be already done from the client DSP program)
+                          // and close (cleanup) the Windows Sockets API (WSA)
 	
 	virtual bool InitHW(char *name, char *model, int& extio_type);
 	virtual bool OpenHW(void);
@@ -320,6 +319,8 @@ public:
 	virtual void ShowGUI(void);
 	virtual void HideGUI(void);
 	
+	virtual const char *name() { return "HPSDR-I0HDV"; }
+
 	// pointers to abstract types
 	Radio  *pR;
 	ExtioHpsdrRadio < EXTIO_SAMPLE_TYPE > *pExr;

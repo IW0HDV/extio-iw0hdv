@@ -117,7 +117,10 @@ ExtIODll singleton;
 
 ExtIODll::ExtIODll(): Extio(0), pR(0), pExr(0), pGui(0), pExtioEth(0), pCmdRec(0), rxIQ(0) 
 {
-	fprintf (stderr, "%s\n", "ExtioDll HPSDR DEFAULT ctor");
+	// don't put any C runtime related operation here
+	// as it is not going to be honored if and object of this class is
+	// declared as static / singleton
+	//fprintf (stderr, "%s\n", "ExtioDll HPSDR DEFAULT ctor");
     Dll::Register (this);	
 }
 
@@ -182,8 +185,6 @@ void ExtIODll::ProcessAttach()
 	WSADATA wsaData;
 	int err;
 
-	LOG_OPEN("hpsdr", GetInstanceNumber());
-
 	// initialize Windows sockets
 	wVersionRequested = MAKEWORD(1, 1);
 	err = WSAStartup(wVersionRequested, &wsaData);
@@ -194,11 +195,10 @@ void ExtIODll::ProcessAttach()
 		}
 };
 
-// on detaching, close the radio hardware (it should be done form the client DSP program)
+// on detaching, close the radio hardware (it should be already done from the client DSP program)
 // and close (cleanup) the Windows Sockets API (WSA)
 void ExtIODll::ProcessDetach() 
 {
-	CloseHW(); 
 	WSACleanup();
 };
 
@@ -235,8 +235,8 @@ bool ExtIODll::InitHW(char *name, char *model, int & extio_type)
 			}
 		}
 	}
-	strcpy(name, "HPSDR");
-	strcpy(model, "unknown" );   // at this point scan is undergoing, so no answers available
+	strcpy(name, this->name());
+	strcpy(model, "unknown" );   // at this point scan is undergoing, so no answers are yet available
 	return extio_type_.dummy;
 }
 

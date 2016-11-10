@@ -24,11 +24,12 @@
 
 #define LOG_DLG_SIZE 32768
 
+#include "util.h"
+#include "message_allocator.h"
 
 #if !defined NDEBUG || defined FLOG
 
-#include "util.h"
-#include "message_allocator.h"
+
 
 struct LogImpl;
 
@@ -74,7 +75,7 @@ extern template Log &Singleton<Log>();
 
 #else
 
-#define LOG_OPEN(file)
+#define LOG_OPEN(file,n)
 #define LOGT(fmt, ...)
 #define LOGX(fmt, ...)
 #define LOG_CLOSE

@@ -72,7 +72,11 @@ set_property(TARGET extio_perseus_cmake_mgw PROPERTY LINK_SEARCH_START_STATIC 1)
 #target_link_libraries(extio_perseus_cmake_mgw iphlpapi)
 
 target_link_libraries(extio_perseus_cmake_mgw ${PERSEUS_SDR_LIBRARY} ${LIBUSB10_LIBRARY}    )
-
+set_target_properties(extio_perseus_cmake_mgw
+	PROPERTIES
+	PREFIX "" # remove the trailing standard 'lib' prefix
+	OUTPUT_NAME "extio_perseus_cmake_mgw-${VERSION}"
+)
 ###########################################################################
 
 
@@ -91,7 +95,7 @@ GENERATE_EXPORT_HEADER( extio_perseus_cmake_mgw
 # copy in selected locations 
 #
 add_custom_target(dist_perseus
-	COMMAND cp ${CMAKE_BINARY_DIR}/perseus/libextio_perseus_cmake_mgw.dll /c/Users/andrew/HDSDR_270/extio_perseus_cmake_mgw.dll
-	COMMAND cp ${CMAKE_BINARY_DIR}/perseus/libextio_perseus_cmake_mgw.dll /c/Users/andrew/Studio1_1.6/extio_perseus_cmake_mgw.dll
+	COMMAND cp ${CMAKE_BINARY_DIR}/perseus/$<TARGET_FILE_NAME:extio_perseus_cmake_mgw> /c/Users/andrew/HDSDR_270/
+	COMMAND cp ${CMAKE_BINARY_DIR}/perseus/$<TARGET_FILE_NAME:extio_perseus_cmake_mgw> /c/Users/andrew/Studio1_1.6/
 )
 

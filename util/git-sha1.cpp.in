@@ -1,0 +1,12 @@
+#define GIT_SHA1 "@GIT_SHA1@"
+
+static const char *g_GIT_SHA1 = GIT_SHA1;
+
+const char *GetGitSHA1 ()
+{
+	return g_GIT_SHA1;
+}
+
+
+
+
