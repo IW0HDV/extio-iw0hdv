@@ -38,7 +38,12 @@
 //#define free(x)   
 #endif
 #if defined __MINGW32__
-#define  strcpy_s(a,b,c) strcpy(a,c)
+	#include <string.h>
+	#if defined strncpy_s
+	#message "strncpy_s is defined"
+	#else
+	#define  strcpy_s(a,b,c) strcpy(a,c)
+	#endif
 #endif
 
 #include <stdio.h>

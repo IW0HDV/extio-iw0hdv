@@ -11,6 +11,7 @@
 
 #include <memory.h>
 #include <algorithm>
+
 #include <airspy.h>
 #include "log.h"
 #include "airspy.hpp"

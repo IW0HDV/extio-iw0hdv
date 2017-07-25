@@ -10,10 +10,15 @@
 #
 
 find_library(LIBUSB10_LIBRARY
-    NAMES libusb-1.0.a
-	#PATH_SUFFIXES .a
+	NAMES libusb-1.0.a
+
+# for MinGW64
+#	PATH_SUFFIXES .a
+#	PATHS /mingw64/
+# for old MinGW
 	PATHS c:/mingw/lib
 	NO_DEFAULT_PATH
+
 )
 if (NOT LIBUSB10_LIBRARY)
 	message( FATAL_ERROR "libusb-1.0 not found")
@@ -23,6 +28,12 @@ else ()
 endif ()
 
 find_library(PTHREAD_LIBRARY
+
+# for MinGW64
+#	NAMES libpthread.a
+#	PATH_SUFFIXES .a
+#	PATHS  /mingw64/
+# for old MinGW
 	NAMES libpthreadGCE2.a
 	PATH_SUFFIXES .a
 	PATHS ${CMAKE_SOURCE_DIR}/../pthreads
