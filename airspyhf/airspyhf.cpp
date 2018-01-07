@@ -18,10 +18,9 @@
 
 void AirSpyHfRadio::get_lib_version (int &major, int &minor, int &revision)
 {
-	///static airspyhf_lib_version_t lib_version;
-	//airspyhf_lib_version(&lib_version);
-	//major = lib_version.major_version, minor = lib_version.minor_version, revision = lib_version.revision; 
-	major = minor = revision = 0;
+	static airspyhf_lib_version_t lib_version;
+	airspyhf_lib_version(&lib_version);
+	major = lib_version.major_version, minor = lib_version.minor_version, revision = lib_version.revision; 
 }
 
 
@@ -79,9 +78,19 @@ const char *AirSpyHfRadio::get_serial ()
         LOGT("failed: (%d)\n", result);
         return "UNKNOWN";
 	} else {
-	    snprintf (serial, sizeof(serial), "%08X%08X", 
-		          read_partid_serialno.serial_no[2],
-				  read_partid_serialno.serial_no[3]);
+		#if 0
+	    snprintf (serial, sizeof(serial), "%x [%08X%08X]", 
+								read_partid_serialno.part_id,
+								read_partid_serialno.serial_no[2],
+								read_partid_serialno.serial_no[3]);
+		#else
+			snprintf (serial, sizeof(serial), "[%08X-%08X-%08X-%08X]", 
+								read_partid_serialno.serial_no[0],
+								read_partid_serialno.serial_no[1],
+								read_partid_serialno.serial_no[2],
+								read_partid_serialno.serial_no[3]
+								);
+		#endif
 	}
 	return serial;
 }
@@ -96,8 +105,16 @@ int AirSpyHfRadio::open ()
 		// querying with '0' returns the number of sample rates available
 		::airspyhf_get_samplerates(device, &n_sr_, 0);
 		if (n_sr_ > 0) {
+			LOGT("sample rates available: (%d)\n", n_sr_);
 			srs_ = new uint32_t [n_sr_]; // set up a properly sized vector
-			::airspyhf_get_samplerates(device, srs_, n_sr_); // read the list
+			result = ::airspyhf_get_samplerates(device, srs_, n_sr_); // read the list
+			if( result != AIRSPYHF_SUCCESS ) {
+				LOGT("::airspyhf_get_samplerates() failed: (%d)\n", result);
+			} else {
+				for (unsigned i=0; i < n_sr_; ++i) {
+					LOGT("samplerate(%d): %d\n", i, srs_[i]);
+				}
+			}
 			return 0;
 		} else
 			return -1;
@@ -224,7 +241,7 @@ const char* AirSpyHfRadio::board_id_name ()
 const char* AirSpyHfRadio::version_string ()
 {
 	::memset (version, 0, sizeof(version));
-	#if 0
+	#if 1
 	if (AIRSPYHF_SUCCESS == ::airspyhf_version_string_read(device, version, sizeof(version)-1)) {
 		return version;
 	} else

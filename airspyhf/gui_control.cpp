@@ -108,7 +108,7 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 
 	// display serial number
 	if (pr_) {
-		AppendWinTitle(GuiEvent(pi->hDialog, 0), " S/N ");
+		AppendWinTitle(GuiEvent(pi->hDialog, 0), " S/N* ");
 		AppendWinTitle(GuiEvent(pi->hDialog, 0), pr_->get_serial());
 		AppendWinTitle(GuiEvent(pi->hDialog, 0), " - ");
 		AppendWinTitle(GuiEvent(pi->hDialog, 0), pr_->version_string());
