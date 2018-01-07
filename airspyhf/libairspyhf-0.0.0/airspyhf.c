@@ -31,7 +31,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libusb.h>
+#include <libusb-1.0/libusb.h>
 #include <pthread.h>
 #include <math.h>
 
@@ -39,10 +39,13 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include "airspyhf.h"
 #include "airspyhf_commands.h"
 
+// C++ guard in order to avoid compiler warning IW0HDV 7/1/2018
+#ifndef __cplusplus
 #ifndef bool
 typedef int bool;
 #define true 1
 #define false 0
+#endif
 #endif
 
 #ifndef M_PI
@@ -527,6 +530,8 @@ static void airspyhf_open_exit(airspyhf_device_t* device)
 	device->usb_context = NULL;
 }
 
+// commented out in order to avoid compiler warning IW0HDV 7/1/2018
+#if 0
 static void upper_string(unsigned char *string, size_t len)
 {
 	while (len > 0)
@@ -539,6 +544,7 @@ static void upper_string(unsigned char *string, size_t len)
 		len--;
 	}
 }
+#endif
 
 static int airspyhf_read_samplerates_from_fw(airspyhf_device_t* device, uint32_t* buffer, const uint32_t len)
 {
@@ -1080,7 +1086,7 @@ int ADDCALL airspyhf_set_freq(airspyhf_device_t* device, const uint32_t freq_hz)
 	const int if_shift = 5000;
 	const uint32_t lo_low_khz = 200;
 
-	int result;
+	unsigned int result;
 	uint8_t buf[4];
 	
 	uint32_t adjusted_freq_hz = (uint32_t) ((int64_t) freq_hz * (int64_t) (1000000000LL + device->calibration_ppb) / 1000000000LL);
@@ -1119,7 +1125,7 @@ int ADDCALL airspyhf_set_freq(airspyhf_device_t* device, const uint32_t freq_hz)
 
 static int airspyhf_config_write(airspyhf_device_t* device, uint8_t *buffer, uint16_t length)
 {
-	int result;
+	unsigned int result;
 	uint8_t buf[256];
 
 	memset(buf, 0, sizeof(buf));
@@ -1147,7 +1153,7 @@ static int airspyhf_config_write(airspyhf_device_t* device, uint8_t *buffer, uin
 static int airspyhf_config_read(airspyhf_device_t* device, uint8_t *buffer, uint16_t length)
 {
 	uint8_t buf[256];
-	int result;
+	unsigned int result;
 
 	result = libusb_control_transfer(
 		device->usb_device,
