@@ -35,7 +35,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 
 #define AIRSPYHF_ENDPOINT_IN (1)
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(STATIC_AIRSPYHFPLUS)
 	 #define ADD_EXPORTS
 	 
 	/* You should define ADD_EXPORTS *only* when building the DLL. */
@@ -84,6 +84,20 @@ enum airspyhf_board_id
 	AIRSPYHF_BOARD_ID_INVALID = 0xFF,
 };
 
+typedef enum
+{
+	AIRSPYHF_USER_OUTPUT_0 = 0,
+	AIRSPYHF_USER_OUTPUT_1 = 1,
+	AIRSPYHF_USER_OUTPUT_2 = 2,
+	AIRSPYHF_USER_OUTPUT_3 = 3
+} airspyhf_user_output_t;
+
+typedef enum
+{
+	AIRSPYHF_USER_OUTPUT_LOW	= 0,
+	AIRSPYHF_USER_OUTPUT_HIGH	= 1
+} airspyhf_user_output_state_t;
+
 typedef struct airspyhf_device airspyhf_device_t;
 
 typedef struct {
@@ -94,8 +108,16 @@ typedef struct {
 	uint64_t dropped_samples;
 } airspyhf_transfer_t;
 
+typedef struct {
+	uint32_t major_version;
+	uint32_t minor_version;
+	uint32_t revision;
+} airspyhf_lib_version_t;
+
 typedef int (*airspyhf_sample_block_cb_fn) (airspyhf_transfer_t* transfer_fn);
 
+extern ADDAPI void ADDCALL airspyhf_lib_version(airspyhf_lib_version_t* lib_version);
+extern ADDAPI int ADDCALL airspyhf_list_devices(uint64_t *serials, int count);
 extern ADDAPI int ADDCALL airspyhf_open(airspyhf_device_t** device);
 extern ADDAPI int ADDCALL airspyhf_open_sn(airspyhf_device_t** device, uint64_t serial_number);
 extern ADDAPI int ADDCALL airspyhf_close(airspyhf_device_t* device);
@@ -109,7 +131,8 @@ extern ADDAPI int ADDCALL airspyhf_get_calibration(airspyhf_device_t* device, in
 extern ADDAPI int ADDCALL airspyhf_set_calibration(airspyhf_device_t* device, int32_t ppb);
 extern ADDAPI int ADDCALL airspyhf_flash_calibration(airspyhf_device_t* device);
 extern ADDAPI int ADDCALL airspyhf_board_partid_serialno_read(airspyhf_device_t* device, airspyhf_read_partid_serialno_t* read_partid_serialno);
-
+extern ADDAPI int ADDCALL airspyhf_version_string_read(airspyhf_device_t* device, char* version, uint8_t length);
+extern ADDAPI int ADDCALL airspyhf_set_user_output(airspyhf_device_t* device, airspyhf_user_output_t pin, airspyhf_user_output_state_t value);
 #ifdef __cplusplus
 }
 #endif

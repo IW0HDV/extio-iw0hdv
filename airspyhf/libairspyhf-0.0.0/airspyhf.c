@@ -31,7 +31,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libusb-1.0/libusb.h>
+#include <libusb.h>
 #include <pthread.h>
 #include <math.h>
 
@@ -39,17 +39,15 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include "airspyhf.h"
 #include "airspyhf_commands.h"
 
-#ifndef __cplusplus
 #ifndef bool
 typedef int bool;
 #define true 1
 #define false 0
 #endif
-#endif
 
 #ifndef M_PI
 #define M_PI (3.14159265359)
-#endif 
+#endif
 
 #define MAX(a,b) ((a) > (b) ? a : b)
 #define MIN(a,b) ((a) < (b) ? a : b)
@@ -70,6 +68,8 @@ typedef int bool;
 #define STR_PREFIX_SERIAL_AIRSPYHF_SIZE (12)
 static const char str_prefix_serial_airspyhf[STR_PREFIX_SERIAL_AIRSPYHF_SIZE] =
 { 'A', 'I', 'R', 'S', 'P', 'Y', 'H', 'F', ' ', 'S', 'N', ':' };
+
+#define VERSION_STRING_SIZE (64)
 
 #ifdef AIRSPYHF_BIG_ENDIAN
 #define TO_LE(x) __builtin_bswap32(x)
@@ -117,7 +117,6 @@ struct airspyhf_device
 	volatile int received_buffer_count;
 	airspyhf_complex_float_t *output_buffer;
 	void* ctx;
-//	enum airspyhf_sample_type sample_type;
 };
 
 typedef struct calibration_record
@@ -128,6 +127,8 @@ typedef struct calibration_record
 
 static const uint16_t airspyhf_usb_vid = 0x03EB;
 static const uint16_t airspyhf_usb_pid = 0x800C;
+
+static int airspyhf_config_read(airspyhf_device_t* device, uint8_t *buffer, uint16_t length);
 
 static int cancel_transfers(airspyhf_device_t* device)
 {
@@ -578,10 +579,7 @@ static void airspyhf_open_device(airspyhf_device_t* device,
 	ssize_t cnt;
 	int serial_descriptor_index;
 	struct libusb_device_descriptor device_descriptor;
-	char serial_number_expected[AIRSPYHF_SERIAL_SIZE + 1];
 	unsigned char serial_number[AIRSPYHF_SERIAL_SIZE + 1];
-	uint32_t serial_number_msb_val;
-	uint32_t serial_number_lsb_val;
 
 	libusb_dev_handle = &device->usb_device;
 	*libusb_dev_handle = NULL;
@@ -616,19 +614,19 @@ static void airspyhf_open_device(airspyhf_device_t* device,
 						serial_descriptor_index,
 						serial_number,
 						sizeof(serial_number));
-					if (serial_number_len == AIRSPYHF_SERIAL_SIZE)
+
+					if (serial_number_len == AIRSPYHF_SERIAL_SIZE && !memcmp(str_prefix_serial_airspyhf, serial_number, STR_PREFIX_SERIAL_AIRSPYHF_SIZE))
 					{
-						serial_number[AIRSPYHF_SERIAL_SIZE] = 0;
-						upper_string(serial_number, AIRSPYHF_SERIAL_SIZE);
-						serial_number_msb_val = (uint32_t)(serial_number_val >> 32);
-						serial_number_lsb_val = (uint32_t)(serial_number_val & 0xFFFFFFFF);
-
-						sprintf(serial_number_expected, "%s%08X%08X",
-							str_prefix_serial_airspyhf,
-							serial_number_msb_val,
-							serial_number_lsb_val);
-
-						if (strncmp((const char*)serial_number, serial_number_expected, AIRSPYHF_SERIAL_SIZE) == 0)
+						uint64_t serial = SERIAL_NUMBER_UNUSED;
+						// use same code to detemine device's serial number as in airspyhf_list_devices()
+						{
+							char *start, *end;
+							serial_number[AIRSPYHF_SERIAL_SIZE] = 0;
+							start = (char*)(serial_number + STR_PREFIX_SERIAL_AIRSPYHF_SIZE);
+							end = NULL;
+							serial = strtoull(start, &end, 16);
+						}
+						if (serial == serial_number_val)
 						{
 							result = libusb_set_configuration(dev_handle, 1);
 							if (result != 0)
@@ -715,7 +713,88 @@ static void airspyhf_open_device(airspyhf_device_t* device,
 	return;
 }
 
-static int airspyhf_config_read(airspyhf_device_t* device, uint8_t *buffer, uint16_t length);
+int airspyhf_list_devices(uint64_t *serials, int count)
+{
+	libusb_device_handle* libusb_dev_handle;
+	struct libusb_context *context;
+	libusb_device** devices = NULL;
+	libusb_device *dev;
+	struct libusb_device_descriptor device_descriptor;
+
+	int serial_descriptor_index;
+	int serial_number_len;
+	int output_count;
+	int i;
+	unsigned char serial_number[AIRSPYHF_SERIAL_SIZE + 1];
+
+	if (serials)
+	{
+		memset(serials, 0, sizeof(uint64_t) * count);
+	}
+
+	if (libusb_init(&context) != 0)
+	{
+		return AIRSPYHF_ERROR;
+	}
+
+	if (libusb_get_device_list(context, &devices) < 0)
+	{
+		return AIRSPYHF_ERROR;
+	}
+
+	i = 0;
+	output_count = 0;
+	while ((dev = devices[i++]) != NULL && (!serials || output_count < count))
+	{
+		libusb_get_device_descriptor(dev, &device_descriptor);
+
+		if ((device_descriptor.idVendor == airspyhf_usb_vid) &&
+			(device_descriptor.idProduct == airspyhf_usb_pid))
+		{
+			serial_descriptor_index = device_descriptor.iSerialNumber;
+			if (serial_descriptor_index > 0)
+			{
+				if (libusb_open(dev, &libusb_dev_handle) != 0)
+				{
+					continue;
+				}
+
+				serial_number_len = libusb_get_string_descriptor_ascii(libusb_dev_handle,
+					serial_descriptor_index,
+					serial_number,
+					sizeof(serial_number));
+
+				if (serial_number_len == AIRSPYHF_SERIAL_SIZE && !memcmp(str_prefix_serial_airspyhf, serial_number, STR_PREFIX_SERIAL_AIRSPYHF_SIZE))
+				{
+					char *start, *end;
+					uint64_t serial;
+
+					serial_number[AIRSPYHF_SERIAL_SIZE] = 0;
+					start = (char*)(serial_number + STR_PREFIX_SERIAL_AIRSPYHF_SIZE);
+					end = NULL;
+					serial = strtoull(start, &end, 16);
+					if (serial == 0 && start == end)
+					{
+						libusb_close(libusb_dev_handle);
+						continue;
+					}
+
+					if (serials)
+					{
+						serials[output_count] = serial;
+					}
+					output_count++;
+				}
+
+				libusb_close(libusb_dev_handle);
+			}
+		}
+	}
+
+	libusb_free_device_list(devices, 1);
+	libusb_exit(context);
+	return output_count;
+}
 
 static int airspyhf_open_init(airspyhf_device_t** device, uint64_t serial_number)
 {
@@ -818,6 +897,13 @@ static int airspyhf_open_init(airspyhf_device_t** device, uint64_t serial_number
 	*device = lib_device;
 
 	return AIRSPYHF_SUCCESS;
+}
+
+void ADDCALL airspyhf_lib_version(airspyhf_lib_version_t* lib_version)
+{
+	lib_version->major_version = AIRSPYHF_VER_MAJOR;
+	lib_version->minor_version = AIRSPYHF_VER_MINOR;
+	lib_version->revision = AIRSPYHF_VER_REVISION;
 }
 
 int ADDCALL airspyhf_open_sn(airspyhf_device_t** device, uint64_t serial_number)
@@ -992,7 +1078,7 @@ int ADDCALL airspyhf_set_freq(airspyhf_device_t* device, const uint32_t freq_hz)
 {
 	const int tuning_alignment = 1000;
 	const int if_shift = 5000;
-	const uint32_t lo_low_khz = 150;
+	const uint32_t lo_low_khz = 200;
 
 	int result;
 	uint8_t buf[4];
@@ -1017,7 +1103,7 @@ int ADDCALL airspyhf_set_freq(airspyhf_device_t* device, const uint32_t freq_hz)
 			sizeof(buf),
 			0);
 
-		if (result < (int)sizeof(buf))
+		if (result < sizeof(buf))
 		{
 			return AIRSPYHF_ERROR;
 		}
@@ -1050,7 +1136,7 @@ static int airspyhf_config_write(airspyhf_device_t* device, uint8_t *buffer, uin
 		sizeof(buf),
 		0);
 
-	if (result < (int)sizeof(buf))
+	if (result < sizeof(buf))
 	{
 		return AIRSPYHF_ERROR;
 	}
@@ -1075,7 +1161,7 @@ static int airspyhf_config_read(airspyhf_device_t* device, uint8_t *buffer, uint
 
 	memcpy(buffer, buf, MIN(length, sizeof(buf)));
 
-	if (result < (int)sizeof(buf))
+	if (result < sizeof(buf))
 	{
 		return AIRSPYHF_ERROR;
 	}
@@ -1136,4 +1222,60 @@ int ADDCALL airspyhf_board_partid_serialno_read(airspyhf_device_t* device, airsp
 	}
 	
 	return AIRSPYHF_SUCCESS;	
+}
+
+int ADDCALL airspyhf_version_string_read(airspyhf_device_t* device, char* version, uint8_t length)
+{
+	int result;
+	char version_local[VERSION_STRING_SIZE];
+
+	result = libusb_control_transfer(
+		device->usb_device,
+		LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
+		AIRSPYHF_GET_VERSION_STRING,
+		0,
+		0,
+		(unsigned char*)version_local,
+		(VERSION_STRING_SIZE - 1),
+		0);
+
+	if (result < 0)
+	{
+		return AIRSPYHF_ERROR;
+	}
+	else
+	{
+		if (length > 0)
+		{
+			memcpy(version, version_local, length - 1);
+			version[length - 1] = 0;
+			return AIRSPYHF_SUCCESS;
+		}
+		else
+		{
+			return AIRSPYHF_ERROR;
+		}
+	}
+}
+
+int ADDCALL airspyhf_set_user_output(airspyhf_device_t* device, airspyhf_user_output_t pin, airspyhf_user_output_state_t value)
+{
+	int result;
+
+	result = libusb_control_transfer(
+		device->usb_device,
+		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
+		AIRSPYHF_SET_USER_OUTPUT,
+		(uint16_t)pin,
+		(uint16_t)value,
+		NULL,
+		0,
+		0);
+
+	if (result < 0)
+	{
+		return AIRSPYHF_ERROR;
+	}
+
+	return AIRSPYHF_SUCCESS;
 }
