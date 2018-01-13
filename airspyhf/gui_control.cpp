@@ -38,7 +38,7 @@ AirSpyHfCtrlGui::AirSpyHfCtrlGui(PEXTPRADIO<EXTIO_BASE_TYPE> &pr):
 	
 	if (pr_) fn += pr_->get_serial();
 	
-	cfg_.reset ( new Config<AIRSPYHF_CFG_T>((fn+".txt").c_str(), std::make_tuple(-1) ));
+	cfg_.reset ( new Config<AIRSPYHF_CFG_T>((fn+".txt").c_str(), std::make_tuple(-1, 0, 0, 0, 0, 0) ));
 
 	LOGT("******* AirSpyHfCtrlGui: pImpl: %p Gui addr: %p Cfg: %p, (%s)\n", pi, this, cfg_.get(), fn.c_str());
 
@@ -91,10 +91,52 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 				snprintf (buf, sizeof(buf), "Sample rate %d not available in hardware", sample_rate);
 				SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)buf );
 			}
+
+			// read calibration from config file
+			int32_t ppb = cfg_->get<C_CAL,int>();
+			LOGT("Calibration from cfg(%p): %d\n", cfg_.get(), ppb);
+
+			//
+			// read calibration from the radio
+			// if a value != 0 is found, realign configuration file
+			// to the value found in hardware
+			//
+			// this behavior should be useful when you attach
+			// a calibrated hardware that has been flashed during the
+			// manufacturing process
+			//
+			if (pr_) {
+				int rppb;
+				// get calibration and ...
+				pr_-> get_calibration (&rppb);
+				LOGT("Calibration from radio: %d\n", rppb);
+				if (rppb != 0 && rppb != ppb) {
+					ppb = rppb;
+					// ... save it back to config file
+					cfg_->set<C_CAL,int>(ppb);
+				}
+			}
+			// set the PPB entry field text
+			snprintf (buf, sizeof(buf), "%d", ppb);
+			SendMessage(GetDlgItem(ev.hWnd, ID_EDIT_PPB), WM_SETTEXT, 0, (LPARAM)buf);
+
+			// read GP I/O from configuration file and set check boxes accordingly
+			Button_SetCheck(GetDlgItem(ev.hWnd, ID_CB_GPIO_0), (cfg_->get<C_GPIO_0,int>() == 1) ? BST_CHECKED : BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(ev.hWnd, ID_CB_GPIO_1), (cfg_->get<C_GPIO_1,int>() == 1) ? BST_CHECKED : BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(ev.hWnd, ID_CB_GPIO_2), (cfg_->get<C_GPIO_2,int>() == 1) ? BST_CHECKED : BST_UNCHECKED);
+			Button_SetCheck(GetDlgItem(ev.hWnd, ID_CB_GPIO_3), (cfg_->get<C_GPIO_3,int>() == 1) ? BST_CHECKED : BST_UNCHECKED);
 		}
 	} else {
 		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)"AirSpyHf internal error, no sample rate avail");
 	}
+	//
+	// select the range of spin control
+	// the max value is negative in order to get going the control with a natural behavior
+	// pressing the UP arrow the value increases
+	// https://blogs.msdn.microsoft.com/oldnewthing/20051222-12/?p=32873
+	//
+	SendMessage(GetDlgItem(ev.hWnd, ID_SC_PPB), UDM_SETRANGE, 0, MAKELPARAM(-100000, 100000));
+
 	//
 	// setup for tool bar
 	//	
@@ -154,3 +196,52 @@ bool AirSpyHfCtrlGui::ComboBoxSelChange(const GuiEvent &ev)
 	return false;
 }
 
+
+bool AirSpyHfCtrlGui::OkPressed(const GuiEvent &ev)
+{
+	if (ev.id == ID_EDIT_PPB) {
+		char buf[128] = {0};
+		int ppb;
+
+		GetWindowText( GetDlgItem(ev.hWnd, ID_EDIT_PPB), buf, sizeof(buf));
+		LOGT("event.id: %d item [%s] selected in PPB edit\n", ev.id, buf );
+	  if (sscanf(buf, "%d", &ppb) == 1) {
+			cfg_->set<C_CAL,int>(ppb);
+			if (pr_) pr_-> set_calibration (ppb);
+		}
+		return true;
+	}
+	return false;
+}
+
+bool AirSpyHfCtrlGui::ButtonClick(const GuiEvent &ev)
+{
+	if (ev.id >= ID_CB_GPIO_0 && ev.id <= ID_CB_GPIO_3) {
+		int   newStatus;
+		if (IsDlgButtonChecked(ev.hWnd, ev.id) == BST_CHECKED) {
+			newStatus = 1;
+		}
+		else {
+			newStatus = 0;
+		}
+		switch (ev.id) {
+		case ID_CB_GPIO_0:
+			pr_->set_user_output(AIRSPYHF_USER_OUTPUT_0, (newStatus == 1 ? AIRSPYHF_USER_OUTPUT_HIGH : AIRSPYHF_USER_OUTPUT_LOW));
+			cfg_->set<C_GPIO_0,int>(newStatus);
+			break;
+		case ID_CB_GPIO_1:
+			pr_->set_user_output(AIRSPYHF_USER_OUTPUT_1, (newStatus == 1 ? AIRSPYHF_USER_OUTPUT_HIGH : AIRSPYHF_USER_OUTPUT_LOW));
+			cfg_->set<C_GPIO_1,int>(newStatus);
+			break;
+		case ID_CB_GPIO_2:
+			pr_->set_user_output(AIRSPYHF_USER_OUTPUT_2, (newStatus == 1 ? AIRSPYHF_USER_OUTPUT_HIGH : AIRSPYHF_USER_OUTPUT_LOW));
+			cfg_->set<C_GPIO_2,int>(newStatus);
+			break;
+		case ID_CB_GPIO_3:
+			pr_->set_user_output(AIRSPYHF_USER_OUTPUT_3, (newStatus == 1 ? AIRSPYHF_USER_OUTPUT_HIGH : AIRSPYHF_USER_OUTPUT_LOW));
+			cfg_->set<C_GPIO_3,int>(newStatus);
+			break;
+		}
+	}
+	return false;
+}

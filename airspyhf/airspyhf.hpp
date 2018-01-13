@@ -49,36 +49,11 @@ public:
 	int set_frequency (int);
 	int get_frequency ();
 	
-#if 0
-	/* Parameter value shall be between 0 and 15 */
-    int set_lna_gain(uint8_t value);
-    int get_lna_gain() { return lna_gain_ ; }
+	int get_calibration (int32_t *ppb = 0);
+	int set_calibration (int32_t);
 
-    /* Parameter value shall be between 0 and 15 */
-    int set_mixer_gain(uint8_t value);
-    int get_mixer_gain() { return mixer_gain_ ; }
+	int set_user_output(airspyhf_user_output_t pin, airspyhf_user_output_state_t value);
 
-    /* Parameter value shall be between 0 and 15 */
-    int set_vga_gain(uint8_t value);
-    int get_vga_gain() { return vga_gain_ ; }
-
-    /* Parameter value:
-    	0=Disable LNA Automatic Gain Control
-    	1=Enable LNA Automatic Gain Control
-    */
-    int set_lna_agc(uint8_t value);
-    /* Parameter value:
-    	0=Disable MIXER Automatic Gain Control
-    	1=Enable MIXER Automatic Gain Control
-    */
-    int set_mixer_agc(uint8_t value);
-    
-    /* Parameter value shall be 0=Disable BiasT or 1=Enable BiasT */
-    int set_rf_bias(uint8_t value);
-
-	int set_sensitivity_gain (uint8_t value);
-	int set_linearity_gain (uint8_t value);
-#endif
 	/* utilities */
     const char* board_id_name();
 
@@ -107,6 +82,7 @@ public:
   char version[256];
 	uint32_t   n_sr_;
 	uint32_t  *srs_;
+	int32_t    ppb_cal_;
 };
 
 #endif

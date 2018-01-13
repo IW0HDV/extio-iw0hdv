@@ -32,7 +32,8 @@ AirSpyHfRadio::AirSpyHfRadio ():
 	buffer(0),
 	bl_(0),
 	n_sr_(0),
-	srs_(0)
+	srs_(0),
+	ppb_cal_(0)
 {
 	strcpy (serial,"");
 	// airspyhf_init() deprecated
@@ -102,6 +103,8 @@ int AirSpyHfRadio::open ()
       LOGT("airspyhf_open() failed: (%d)\n", result);
 			return -1;
     } else {
+		// get calibration value from radio
+		get_calibration ();
 		// querying with '0' returns the number of sample rates available
 		::airspyhf_get_samplerates(device, &n_sr_, 0);
 		if (n_sr_ > 0) {
@@ -257,3 +260,34 @@ const int AirSpyHfRadio::get_samplerate_n (unsigned int n)
 		return -1;
 }
 
+int AirSpyHfRadio::get_calibration (int32_t *ppb)
+{
+	if (device && ::airspyhf_get_calibration(device, &ppb_cal_) == AIRSPYHF_SUCCESS) {
+		LOGT("airspyhf_get_calibration: (%d)\n", ppb_cal_);
+		if (ppb) *ppb = ppb_cal_;
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
+
+int AirSpyHfRadio::set_calibration (int32_t ppb)
+{
+	if (device && ::airspyhf_set_calibration(device, ppb_cal_ = ppb) == AIRSPYHF_SUCCESS) {
+		LOGT("airspyhf_set_calibration: (%d)\n", ppb_cal_);
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
+int AirSpyHfRadio::set_user_output(airspyhf_user_output_t pin, airspyhf_user_output_state_t value)
+{
+	if (device && ::airspyhf_set_user_output(device, pin, value) == AIRSPYHF_SUCCESS) {
+		LOGT("airspyhf_set_user_output: pin: %d, value: %d\n", pin, value);
+		return 0;
+	} else {
+		return -1;
+	}
+}
