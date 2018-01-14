@@ -7,8 +7,10 @@
 #define IDD_AIRSPY_CONTROL_DLG                  105
 #define IDD_SPLASHSCREEN                        1001
 #define IDC_SPLASH_MSG                          40000
+#define ID_PB_FLASH_CAL                         40000
 #define ID_EDIT_PPB                             40001
 #define IDD_IMAGE_2                             40002
+#define ID_COMBO_DEVLIST                        40003
 #define ID_COMBO_SR                             40007
 #define ID_SC_PPB                               40008
 #define ID_CB_GPIO_0                            40010

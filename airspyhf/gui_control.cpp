@@ -110,6 +110,7 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 				// get calibration and ...
 				pr_-> get_calibration (&rppb);
 				LOGT("Calibration from radio: %d\n", rppb);
+				// ... if different ...
 				if (rppb != 0 && rppb != ppb) {
 					ppb = rppb;
 					// ... save it back to config file
@@ -138,6 +139,40 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 	SendMessage(GetDlgItem(ev.hWnd, ID_SC_PPB), UDM_SETRANGE, 0, MAKELPARAM(-100000, 100000));
 
 	//
+	// setup device list combo box
+	//
+	const char **dev_list;
+	unsigned int nd = AirSpyHfRadio::scan_devices (&dev_list);
+	if (nd > 0) {
+		int n = -1;
+
+		// fill the combo box
+
+		// test only
+		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), CB_ADDSTRING, 0, (LPARAM)"00010203040506070809101112131415");
+
+		for (unsigned i = 0; i < nd; ++i) {
+			// returns the current position
+			int x = SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), CB_ADDSTRING, 0, (LPARAM)dev_list[i]);
+
+			//LOGT("Device Serial Number (%d): [%s][%s]\n", i, dev_list[i], pr_->get_serial());
+
+			// store position in the combo of the current device
+			if (strcmp (dev_list[i], pr_->get_serial()) == 0) n = x;
+		}
+
+		// test only
+		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), CB_ADDSTRING, 0, (LPARAM)"15141312111009080706050403020100");
+
+		if (n == -1) // if we are not there
+			// select first row, we have to go somewhere
+			SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), CB_SETCURSEL, 0, 0);
+		else
+			// select the row where the current device is
+			SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), CB_SETCURSEL, n, 0);
+	}
+
+	//
 	// setup for tool bar
 	//	
 	HICON icon = LoadIcon(Dll::GetMyHandle(), MAKEINTRESOURCE(IDI_ICON1));
@@ -150,7 +185,7 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 
 	// display serial number
 	if (pr_) {
-		AppendWinTitle(GuiEvent(pi->hDialog, 0), " S/N* ");
+		AppendWinTitle(GuiEvent(pi->hDialog, 0), " S/N:");
 		AppendWinTitle(GuiEvent(pi->hDialog, 0), pr_->get_serial());
 		AppendWinTitle(GuiEvent(pi->hDialog, 0), " - ");
 		AppendWinTitle(GuiEvent(pi->hDialog, 0), pr_->version_string());
@@ -163,16 +198,27 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 
 void AirSpyHfCtrlGui::EnableControls()
 {
+	LOGT("%s\n", "AirSpyHfCtrlGui::EnableControls");
+
 	GuiEvent ev(pi->hDialog, 0);
 	
-	EnableAll(ev, GuiEvent(0, true));
+	::EnableWindow(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), 1);
+	::EnableWindow(GetDlgItem(ev.hWnd, ID_PB_FLASH_CAL),  1);
+	::EnableWindow(GetDlgItem(ev.hWnd, ID_COMBO_SR),      1);
 	
 	Gui::Show();
 }
 
 void AirSpyHfCtrlGui::DisableControls()
 {
+	LOGT("%s\n", "AirSpyHfCtrlGui::DisableControls");
+
 	GuiEvent ev(pi->hDialog, 0);
+
+	::EnableWindow(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), 0);
+	::EnableWindow(GetDlgItem(ev.hWnd, ID_PB_FLASH_CAL),  0);
+	::EnableWindow(GetDlgItem(ev.hWnd, ID_COMBO_SR),      0);
+
 	Gui::Show();
 }
 

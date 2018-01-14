@@ -17,6 +17,8 @@
  * @date 2017-07-20
  */
  
+#include <stdlib.h>     /* getenv */
+
 #include "log.h"
 #include "extio_airspyhf.h"
 #include "gui_splashscreen.h"
@@ -47,13 +49,27 @@ bool ExtIODll::InitHW(char *name, char *model, int & extio_type)
 	extio_type =  extio_type_.value;
 
 	extio_type_.dummy = true;
+	/*
+	 * The serial number of hardware to be used can be
+	 * specified on the command line
+	 * using the environment variable AIRSPYHF.
+	 * Please note that there are no space between
+	 * the last char of serial number and the double ampersand
+	 *
+	 * set AIRSPYHF=3B528E80D5D23FEF&& HDSDR.exe
+	 *
+	 */
+	char *sn = getenv("AIRSPYHF");
+	if (sn) {
+		LOGT("ENV: %s\n", sn);
+	}
 	
 	if (first) {
 		first = false;
 		
 		pSplash.reset ( new AirSpyHfSplash(0, 0) );
 
-		pExr.reset ( new ExtioAirSpyHfRadio<EXTIO_BASE_TYPE> (EXTIO_NS, &extioCallback ) );
+		pExr.reset ( new ExtioAirSpyHfRadio<EXTIO_BASE_TYPE> (EXTIO_NS, &extioCallback, sn ) );
 
 		if  (pExr == 0 || !pExr->status()) {
 			pSplash->SetStatus("Unable to find receiver ! [%s]", pExr ? pExr->last_error() : "");
@@ -64,7 +80,7 @@ bool ExtIODll::InitHW(char *name, char *model, int & extio_type)
 	}
 
 	strcpy(name, this->name());
-	strcpy(model, "A" ); 
+	strcpy(model, "AirSpyHF+" );
 	return extio_type_.dummy;
 }
 
@@ -117,6 +133,8 @@ int  ExtIODll::StartHW(long freq)
 
 	if (pExr) pExr->startHW(EXTIO_NS * EXTIO_BASE_TYPE_SIZE * 2);
 
+	if (pGui) pGui->DisableControls ();
+
 	return EXTIO_NS; // # of samples returned by callback
 }
 
@@ -127,6 +145,8 @@ void ExtIODll::StopHW(void)
 		LOGT("%s\n", "Stopping async data acquisition...");
 		if (pExr) pExr->stop();
 	}
+	if (pGui) pGui->EnableControls ();
+
 	return;
 }
 

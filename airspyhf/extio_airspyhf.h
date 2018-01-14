@@ -9,8 +9,8 @@
  * @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
  */
 
- #if !defined	__EXTIO_AIRSPYHF_H__
-#define			__EXTIO_AIRSPYHF_H__
+#if !defined	__EXTIO_AIRSPYHF_H__
+#define				__EXTIO_AIRSPYHF_H__
 
 #include "extio_config.h"
 
@@ -51,9 +51,9 @@ template <typename ST>
 class ExtioAirSpyHfRadio : public ExtioDataConversion<ST>, public AirSpyHfRadio
 {
 public:
-	ExtioAirSpyHfRadio(int ns, EXTIO_RX_CALLBACK *pCb): 
+	ExtioAirSpyHfRadio(int ns, EXTIO_RX_CALLBACK *pCb, const char *sn = 0 ):
 		ExtioDataConversion<ST>(ns), 
-		AirSpyHfRadio (),
+		AirSpyHfRadio (sn),
 		cnt(0), 
 		pExtioCallback(pCb),
 		ns_(ns)

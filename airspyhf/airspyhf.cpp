@@ -10,6 +10,7 @@
  */
 
 #include <memory.h>
+#include <inttypes.h>
 #include <algorithm>
 #include <airspyhf.h>
 #include "log.h"
@@ -23,8 +24,11 @@ void AirSpyHfRadio::get_lib_version (int &major, int &minor, int &revision)
 	major = lib_version.major_version, minor = lib_version.minor_version, revision = lib_version.revision; 
 }
 
+unsigned int AirSpyHfRadio::ndev_ = 0;
+uint64_t *AirSpyHfRadio::serials_ = 0;
+char **AirSpyHfRadio::ser_strings_ = 0;
 
-AirSpyHfRadio::AirSpyHfRadio ():
+AirSpyHfRadio::AirSpyHfRadio (const char *sn):
 	sr_(-1),
 	device(0),
 	serial_number_val(0),
@@ -35,15 +39,48 @@ AirSpyHfRadio::AirSpyHfRadio ():
 	srs_(0),
 	ppb_cal_(0)
 {
-	strcpy (serial,"");
+	if (sn)
+		strcpy (serial, sn), strupr(serial);
+	else
+		strcpy (serial,"");
 	// airspyhf_init() deprecated
 	{
 		int major, minor, revision;
     AirSpyHfRadio::get_lib_version (major, minor, revision);
 	  LOGT("airspyhf_lib_version: %d.%d.%d\n", major, minor, revision); 
 	}
+  scan_devices (0);
 }
 
+int AirSpyHfRadio::scan_devices (const char ***dev_list)
+{
+	if (ndev_ == 0) {
+		// get device list length
+		unsigned int nd = airspyhf_list_devices(0, 0);
+
+	  if (nd > 0) {
+			ndev_ = nd;
+			LOGT("# of device(s): %d\n", nd);
+			serials_ = new uint64_t [nd];
+			ser_strings_ = new char * [nd];
+			airspyhf_list_devices(serials_, nd);
+			for (unsigned int i=0; i < nd; ++i) {
+				char b[256];
+				snprintf (b, sizeof(b), "%llX", serials_[i]);
+				ser_strings_[i] = new char [strlen(b)+1];
+				strcpy (ser_strings_[i], b);
+				LOGT("device #%d: %s\n", i, ser_strings_[i]);
+			}
+		} else {
+			LOGT("%s\n", "airspyhf_list_devices: no devices found !");
+			return 0;
+		}
+	}
+
+	if (ndev_  && dev_list) *dev_list = (const char **)ser_strings_;
+
+	return ndev_;
+}
 
 AirSpyHfRadio::~AirSpyHfRadio ()
 {
@@ -55,6 +92,9 @@ AirSpyHfRadio::~AirSpyHfRadio ()
     }
 	}
 	delete [] srs_;
+	delete [] serials_;
+	for (unsigned int i=0; i<ndev_; ++i) delete [] ser_strings_[i];
+	delete [] ser_strings_;
   //airspyhf_exit() deprecated
 	LOGT("%s\n", "~AirSpyHfRadio" );
 }
@@ -72,6 +112,11 @@ const char *AirSpyHfRadio::last_error()
 
 const char *AirSpyHfRadio::get_serial ()
 {
+	return serial;
+}
+
+const char *AirSpyHfRadio::get_serial_from_hw ()
+{
   airspyhf_read_partid_serialno_t read_partid_serialno;
 	
   int result = ::airspyhf_board_partid_serialno_read(device, &read_partid_serialno);
@@ -79,48 +124,57 @@ const char *AirSpyHfRadio::get_serial ()
         LOGT("failed: (%d)\n", result);
         return "UNKNOWN";
 	} else {
-		#if 0
-	    snprintf (serial, sizeof(serial), "%x [%08X%08X]", 
-								read_partid_serialno.part_id,
-								read_partid_serialno.serial_no[2],
-								read_partid_serialno.serial_no[3]);
-		#else
-			snprintf (serial, sizeof(serial), "[%08X-%08X-%08X-%08X]", 
-								read_partid_serialno.serial_no[0],
-								read_partid_serialno.serial_no[1],
-								read_partid_serialno.serial_no[2],
-								read_partid_serialno.serial_no[3]
-								);
-		#endif
+		snprintf (serial, sizeof(serial), "%08X%08X",
+							read_partid_serialno.serial_no[0],
+							read_partid_serialno.serial_no[1]
+							);
 	}
 	return serial;
 }
 
 int AirSpyHfRadio::open ()
 {
-	int result = airspyhf_open(&device);
-    if( result != AIRSPYHF_SUCCESS ) {
-      LOGT("airspyhf_open() failed: (%d)\n", result);
-			return -1;
-    } else {
-		// get calibration value from radio
-		get_calibration ();
-		// querying with '0' returns the number of sample rates available
-		::airspyhf_get_samplerates(device, &n_sr_, 0);
-		if (n_sr_ > 0) {
-			LOGT("sample rates available: (%d)\n", n_sr_);
-			srs_ = new uint32_t [n_sr_]; // set up a properly sized vector
-			result = ::airspyhf_get_samplerates(device, srs_, n_sr_); // read the list
-			if( result != AIRSPYHF_SUCCESS ) {
-				LOGT("::airspyhf_get_samplerates() failed: (%d)\n", result);
-			} else {
-				for (unsigned i=0; i < n_sr_; ++i) {
-					LOGT("samplerate(%d): %d\n", i, srs_[i]);
-				}
+	int result;
+
+	if (strlen (serial) > 0) {
+		uint64_t s = 0;
+		for (unsigned i=0; i < strlen(serial); ++i) {
+			char ch = serial[i];
+			uint8_t x = 0;
+			if (ch >= '0' && ch <= '9')
+				x = ch - '0';
+			else
+				x = (ch - 'A') + 10;
+			s = (s << 4) | x;
+		}
+		LOGT("airspyhf_open(): [%s] (%llX)\n", serial, s);
+		result = airspyhf_open_sn(&device, s);
+	} else {
+		result = airspyhf_open(&device);
+		get_serial_from_hw ();
+	}
+  if( result != AIRSPYHF_SUCCESS ) {
+    LOGT("airspyhf_open() failed: (%d)\n", result);
+		return -1;
+  } else {
+	// get calibration value from radio
+	get_calibration ();
+	// querying with '0' returns the number of sample rates available
+	::airspyhf_get_samplerates(device, &n_sr_, 0);
+	if (n_sr_ > 0) {
+		LOGT("sample rates available: (%d)\n", n_sr_);
+		srs_ = new uint32_t [n_sr_]; // set up a properly sized vector
+		result = ::airspyhf_get_samplerates(device, srs_, n_sr_); // read the list
+		if( result != AIRSPYHF_SUCCESS ) {
+			LOGT("::airspyhf_get_samplerates() failed: (%d)\n", result);
+		} else {
+			for (unsigned i=0; i < n_sr_; ++i) {
+				LOGT("samplerate(%d): %d\n", i, srs_[i]);
 			}
-			return 0;
-		} else
-			return -1;
+		}
+		return 0;
+	} else
+		return -1;
 	}
 }
 

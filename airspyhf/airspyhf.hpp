@@ -34,10 +34,13 @@ const int dbg_lvl = -1;
 
 class AirSpyHfRadio {
 public:
-	AirSpyHfRadio ();
+	AirSpyHfRadio (const char *sn);
 	virtual ~AirSpyHfRadio ();
+
+	static int scan_devices (const char ***dev_list);
 	const char *get_serial ();
-	
+	const char *get_serial_from_hw ();
+
 	bool status ();
 	const char *last_error();
 	int open();
@@ -48,14 +51,14 @@ public:
 
 	int set_frequency (int);
 	int get_frequency ();
-	
+
 	int get_calibration (int32_t *ppb = 0);
 	int set_calibration (int32_t);
 
 	int set_user_output(airspyhf_user_output_t pin, airspyhf_user_output_state_t value);
 
 	/* utilities */
-    const char* board_id_name();
+	const char* board_id_name();
 
 	const int get_samplerate_n (unsigned int n);
 	int get_samplerates () { return n_sr_; }
@@ -83,6 +86,10 @@ public:
 	uint32_t   n_sr_;
 	uint32_t  *srs_;
 	int32_t    ppb_cal_;
+
+	static unsigned int ndev_;
+	static uint64_t *serials_;
+	static char **ser_strings_;
 };
 
 #endif
