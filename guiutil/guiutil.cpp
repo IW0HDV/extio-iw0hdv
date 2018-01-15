@@ -104,3 +104,8 @@ void AppendWinTitle(const GuiEvent& ge, const char *p)
 	}
 }
 
+void ResetWinTitle(const GuiEvent& ge, const char *p)
+{
+	SetWindowText(ge.hWnd, p);
+}
+
