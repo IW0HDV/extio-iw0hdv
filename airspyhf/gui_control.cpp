@@ -234,6 +234,7 @@ bool AirSpyHfCtrlGui::OnWmUser(int n, const GuiEvent& ev)
 	if (n == 1) {
 		LOGT("********************************* Command Receiver WM_USER + %d\n", n);
 		if (pr_) OnInit(ev);
+
 		return true;
 	} else
 		return false;
@@ -267,11 +268,14 @@ bool AirSpyHfCtrlGui::ComboBoxSelChange(const GuiEvent &ev)
 			pr_.reset(); // dereference the pointer to radio object
 			pr_ = pExtIO_->ReOpenHW(buf);
 
-			LOGT("New radio: %s\n", buf);
-
-			GuiEvent ev(pi->hDialog, 0);
-			// asynchronously process Init() method again
-			PostMessage(pi->hDialog, WM_USER + 1, 0, 0);
+			if (pr_) {
+				LOGT("New radio: %s\n", buf);
+				GuiEvent ev(pi->hDialog, 0);
+				// asynchronously process Init() method again
+				PostMessage(pi->hDialog, WM_USER + 1, 0, 0);
+			} else {
+				LOGT("***** Failed to create new radio: %s\n", buf);
+			}
 		}
 		return true;
 	}

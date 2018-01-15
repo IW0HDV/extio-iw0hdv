@@ -86,20 +86,29 @@ bool ExtIODll::InitHW(char *name, char *model, int & extio_type)
 
 PEXTPRADIO<EXTIO_BASE_TYPE> & ExtIODll::ReOpenHW(const char *new_serial)
 {
-	long loc_ox = GetHWLO();
-
 	pExr = nullptr; // delete the old object (it has already been dereferenced even in gui_control.cpp)
 	pExr.reset ( new ExtioAirSpyHfRadio<EXTIO_BASE_TYPE> (EXTIO_NS, &extioCallback, new_serial ) );
 	if (pExr != 0) {
 		if (pExr->open() == 0) {
-			// good, reset local osc in radio hw (HDSDR doesn't do that as he already did)
-			SetHWLO(loc_ox);
+			// open successfull, reset local osc in radio hw (HDSDR doesn't do that as he already did)
+			SetHWLO(local_oscillator);
 		} else {
 			LOGT("ExtIODll::ReOpenHW: fail to open [%s]\n", new_serial);
+			pSplash.reset ( new AirSpyHfSplash(0, 0) );
+			pSplash->SetStatus("Unable to open receiver ! [%s]", new_serial);
+			pSplash->Show();
+
 			pExr.reset();
+			pExr = nullptr;
 		}
 	} else {
+			LOGT("ExtIODll::ReOpenHW: fail to create receiver object with serial: [%s]\n", new_serial);
+			pSplash.reset ( new AirSpyHfSplash(0, 0) );
+			pSplash->SetStatus("Fail to create receiver object with serial: ! [%s]", new_serial);
+			pSplash->Show();
+
 			pExr.reset();
+			pExr = nullptr;
 	}
 	return pExr;
 }
@@ -194,7 +203,7 @@ int ExtIODll::SetHWLO(long freq)
 		if (freq > 260000000) return 260000000;
 	} 
 	
-	if (pExr) pExr->set_frequency (freq);
+	if (pExr) pExr->set_frequency (local_oscillator = freq);
 
 	return 0;
 }
@@ -202,7 +211,7 @@ int ExtIODll::SetHWLO(long freq)
 
 long ExtIODll::GetHWLO(void)
 {
-	if (pExr) return pExr->get_frequency();
+	if (pExr) return local_oscillator = pExr->get_frequency();
 	return 0;
 }
 

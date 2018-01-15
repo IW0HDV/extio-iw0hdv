@@ -102,6 +102,7 @@ public:
 	
 		return 0;
 	}
+
 	/*
 	 * method used in order to force a sample rate change, usually as
 	 * per user input on GUI
@@ -123,7 +124,7 @@ public:
 		}
 	
 	}
-	
+
 	int startHW (int buf_size) 
 	{ 
 		return this->start(buf_size); 
@@ -183,6 +184,9 @@ private:
 	// see http://accu.org/index.php/journals/1328 by Alexander Nasonov
 	//
 	static ExtIODll singleton;
+
+	// keep track of ExtIO local oscillator (in airspyhf the radio hardware frequency)
+	long local_oscillator;
 
 	ExtIODll ();
 	virtual ~ExtIODll ();
