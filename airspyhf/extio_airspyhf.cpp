@@ -84,6 +84,25 @@ bool ExtIODll::InitHW(char *name, char *model, int & extio_type)
 	return extio_type_.dummy;
 }
 
+PEXTPRADIO<EXTIO_BASE_TYPE> & ExtIODll::ReOpenHW(const char *new_serial)
+{
+	long loc_ox = GetHWLO();
+
+	pExr = nullptr; // delete the old object (it has already been dereferenced even in gui_control.cpp)
+	pExr.reset ( new ExtioAirSpyHfRadio<EXTIO_BASE_TYPE> (EXTIO_NS, &extioCallback, new_serial ) );
+	if (pExr != 0) {
+		if (pExr->open() == 0) {
+			// good, reset local osc in radio hw (HDSDR doesn't do that as he already did)
+			SetHWLO(loc_ox);
+		} else {
+			LOGT("ExtIODll::ReOpenHW: fail to open [%s]\n", new_serial);
+			pExr.reset();
+		}
+	} else {
+			pExr.reset();
+	}
+	return pExr;
+}
 
 bool ExtIODll::OpenHW(void)
 {
@@ -93,7 +112,7 @@ bool ExtIODll::OpenHW(void)
 		if (pExr->open() == 0) {
 			pSplash->Hide(); pSplash = nullptr;
 
-			pGui.reset ( new AirSpyHfCtrlGui (pExr) );
+			pGui.reset ( new AirSpyHfCtrlGui (pExr, this) );
 			if (pGui) pGui->Show ();
 			rc = true;
 		} else {

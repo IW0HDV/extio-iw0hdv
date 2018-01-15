@@ -43,7 +43,7 @@ AirSpyHfRadio::AirSpyHfRadio (const char *sn):
 		strcpy (serial, sn), strupr(serial);
 	else
 		strcpy (serial,"");
-	// airspyhf_init() deprecated
+	LOGT("device name: [%s]\n", serial);
 	{
 		int major, minor, revision;
     AirSpyHfRadio::get_lib_version (major, minor, revision);
@@ -95,6 +95,9 @@ AirSpyHfRadio::~AirSpyHfRadio ()
 	delete [] serials_;
 	for (unsigned int i=0; i<ndev_; ++i) delete [] ser_strings_[i];
 	delete [] ser_strings_;
+	ndev_ = 0;
+	srs_ = 0;
+	serials_ = 0;
   //airspyhf_exit() deprecated
 	LOGT("%s\n", "~AirSpyHfRadio" );
 }
@@ -135,7 +138,7 @@ const char *AirSpyHfRadio::get_serial_from_hw ()
 int AirSpyHfRadio::open ()
 {
 	int result;
-
+  LOGT("airspyhf_open(): %d\n", strlen(serial));
 	if (strlen (serial) > 0) {
 		uint64_t s = 0;
 		for (unsigned i=0; i < strlen(serial); ++i) {

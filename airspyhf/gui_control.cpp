@@ -29,10 +29,11 @@
 #include "gui.h" 
 #include "gui_control.h"
 #include "airspyhfw.h"
+#include "extio_airspyhf.h"
 #include <string>
 
-AirSpyHfCtrlGui::AirSpyHfCtrlGui(PEXTPRADIO<EXTIO_BASE_TYPE> &pr): 
-    Gui(IDD_AIRSPY_CONTROL_DLG), pr_(pr)
+AirSpyHfCtrlGui::AirSpyHfCtrlGui(PEXTPRADIO<EXTIO_BASE_TYPE> &pr, ExtIODll *pExtIO): 
+    Gui(IDD_AIRSPY_CONTROL_DLG), pr_(pr), pExtIO_(pExtIO), on_init_(false)
 {
 	std::string fn("AIRSPYHF");
 	
@@ -51,6 +52,8 @@ AirSpyHfCtrlGui::~AirSpyHfCtrlGui ()
 
 bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 {
+	on_init_ = true;
+	
 	LOGT("Event ref: %p\n", ev);
 
 	// detect dynamically samplerates
@@ -59,6 +62,7 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 		char buf [256];
 
 		// fill the drop down box in GUI with all sample rates available from hardware
+		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_RESETCONTENT, 0, 0);
 		for (int i = 0; i < nsr; ++i) {
 			int sr = pr_-> get_samplerate_n (i);
 			LOGT("%d: %d\n", i, sr);
@@ -130,6 +134,7 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 	} else {
 		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)"AirSpyHf internal error, no sample rate avail");
 	}
+
 	//
 	// select the range of spin control
 	// the max value is negative in order to get going the control with a natural behavior
@@ -147,9 +152,10 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 		int n = -1;
 
 		// fill the combo box
+		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), CB_RESETCONTENT, 0, 0);
 
 		// test only
-		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), CB_ADDSTRING, 0, (LPARAM)"00010203040506070809101112131415");
+		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), CB_ADDSTRING, 0, (LPARAM)"0001020304050607");
 
 		for (unsigned i = 0; i < nd; ++i) {
 			// returns the current position
@@ -162,7 +168,7 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 		}
 
 		// test only
-		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), CB_ADDSTRING, 0, (LPARAM)"15141312111009080706050403020100");
+		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), CB_ADDSTRING, 0, (LPARAM)"0706050403020100");
 
 		if (n == -1) // if we are not there
 			// select first row, we have to go somewhere
@@ -185,13 +191,13 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 
 	// display serial number
 	if (pr_) {
-		AppendWinTitle(GuiEvent(pi->hDialog, 0), " S/N:");
+		ResetWinTitle(GuiEvent(pi->hDialog, 0), " S/N:");
 		AppendWinTitle(GuiEvent(pi->hDialog, 0), pr_->get_serial());
 		AppendWinTitle(GuiEvent(pi->hDialog, 0), " - ");
 		AppendWinTitle(GuiEvent(pi->hDialog, 0), pr_->version_string());
-		LOGT("Device Serial Number: %s\n",  pr_->get_serial());
-		LOGT("Device Version String: %s\n", pr_->version_string());
 	}
+
+	on_init_ = false;
 
 	return true;
 }
@@ -223,6 +229,16 @@ void AirSpyHfCtrlGui::DisableControls()
 }
 
 
+bool AirSpyHfCtrlGui::OnWmUser(int n, const GuiEvent& ev)
+{
+	if (n == 1) {
+		LOGT("********************************* Command Receiver WM_USER + %d\n", n);
+		if (pr_) OnInit(ev);
+		return true;
+	} else
+		return false;
+}
+
 bool AirSpyHfCtrlGui::ComboBoxSelChange(const GuiEvent &ev)
 {
 	if (ev.id == ID_COMBO_SR) {
@@ -237,6 +253,26 @@ bool AirSpyHfCtrlGui::ComboBoxSelChange(const GuiEvent &ev)
 		if (sscanf (buf, "%d", &nsr) == 1 && pr_) pr_->setSampleRateHW(nsr);
 		cfg_->set<C_SR,int>(nsr);
 		
+		return true;
+	}
+	if (ev.id == ID_COMBO_DEVLIST && on_init_ == false) {
+		char buf[128] = {0};
+
+		// recover the item of combo box that has been clicked
+		int sel = ComboBox_GetCurSel(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST));
+		ComboBox_GetLBText(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), sel, buf);
+		LOGT("event.id: %d item #%d [%s] selected in ID_COMBO_DEVLIST combo\n", ev.id, sel, buf );
+
+		if (pExtIO_) {
+			pr_.reset(); // dereference the pointer to radio object
+			pr_ = pExtIO_->ReOpenHW(buf);
+
+			LOGT("New radio: %s\n", buf);
+
+			GuiEvent ev(pi->hDialog, 0);
+			// asynchronously process Init() method again
+			PostMessage(pi->hDialog, WM_USER + 1, 0, 0);
+		}
 		return true;
 	}
 	return false;

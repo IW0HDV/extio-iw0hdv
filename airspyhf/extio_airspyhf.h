@@ -128,7 +128,7 @@ public:
 	{ 
 		return this->start(buf_size); 
 	}
-	
+
 protected:
 	int cnt;
 	EXTIO_RX_CALLBACK *pExtioCallback;
@@ -145,6 +145,7 @@ class ExtIODll : public Extio {
 public:
 	
 	virtual bool InitHW(char *name, char *model, int& extio_type);
+	PEXTPRADIO<EXTIO_BASE_TYPE> & ReOpenHW(const char *new_serial);
 	virtual bool OpenHW(void);
 	virtual void CloseHW(void);
 	

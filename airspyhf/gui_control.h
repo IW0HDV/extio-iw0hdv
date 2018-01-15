@@ -23,9 +23,11 @@ typedef std::shared_ptr<AirSpyHfCtrlGui> PCTRLGUI;
 	
 typedef std::tuple<int, int, int, int, int, int> AIRSPYHF_CFG_T;
 
+class ExtIODll;
+
 class AirSpyHfCtrlGui: public Gui {
 public:
-	AirSpyHfCtrlGui (PEXTPRADIO<EXTIO_BASE_TYPE> &pExr);
+	AirSpyHfCtrlGui (PEXTPRADIO<EXTIO_BASE_TYPE> &pExr, ExtIODll *pExtIO = 0);
 	~AirSpyHfCtrlGui ();
 
 	void EnableControls();
@@ -35,6 +37,7 @@ public:
   virtual bool ComboBoxSelChange(const GuiEvent &ev);
   virtual bool OkPressed(const GuiEvent &ev);
 	virtual bool ButtonClick(const GuiEvent &ev);
+	virtual bool OnWmUser(int n, const GuiEvent& ev);
 
 private:
 
@@ -51,6 +54,9 @@ private:
 	
 	std::unique_ptr < Config<AIRSPYHF_CFG_T> > cfg_;
 	
+	ExtIODll *pExtIO_;
+
+	bool on_init_;
 };
 
 #endif
