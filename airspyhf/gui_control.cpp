@@ -35,14 +35,6 @@
 AirSpyHfCtrlGui::AirSpyHfCtrlGui(PEXTPRADIO<EXTIO_BASE_TYPE> &pr, ExtIODll *pExtIO): 
     Gui(IDD_AIRSPY_CONTROL_DLG), pr_(pr), pExtIO_(pExtIO), on_init_(false)
 {
-	std::string fn("AIRSPYHF");
-	
-	if (pr_) fn += pr_->get_serial();
-	
-	cfg_.reset ( new Config<AIRSPYHF_CFG_T>((fn+".txt").c_str(), std::make_tuple(-1, 0, 0, 0, 0, 0) ));
-
-	LOGT("******* AirSpyHfCtrlGui: pImpl: %p Gui addr: %p Cfg: %p, (%s)\n", pi, this, cfg_.get(), fn.c_str());
-
 	if (pi && pi->hDialog) OnInit(GuiEvent(pi->hDialog, -1));
 }
 
@@ -55,6 +47,12 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 	on_init_ = true;
 	
 	LOGT("Event ref: %p\n", ev);
+
+	std::string fn("AIRSPYHF");
+	if (pr_) fn += pr_->get_serial();
+	cfg_.reset ( new Config<AIRSPYHF_CFG_T>((fn+".txt").c_str(), std::make_tuple(-1, 0, 0, 0, 0, 0) ));
+
+	LOGT("******* AirSpyHfCtrlGui: pImpl: %p Gui addr: %p Cfg: %p, (%s)\n", pi, this, cfg_.get(), fn.c_str());
 
 	// detect dynamically samplerates
 	int nsr;
@@ -155,7 +153,7 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), CB_RESETCONTENT, 0, 0);
 
 		// test only
-		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), CB_ADDSTRING, 0, (LPARAM)"0001020304050607");
+		//SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), CB_ADDSTRING, 0, (LPARAM)"0001020304050607");
 
 		for (unsigned i = 0; i < nd; ++i) {
 			// returns the current position
@@ -168,7 +166,7 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 		}
 
 		// test only
-		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), CB_ADDSTRING, 0, (LPARAM)"0706050403020100");
+		//SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), CB_ADDSTRING, 0, (LPARAM)"0706050403020100");
 
 		if (n == -1) // if we are not there
 			// select first row, we have to go somewhere
