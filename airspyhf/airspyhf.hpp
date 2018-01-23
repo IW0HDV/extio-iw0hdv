@@ -54,6 +54,7 @@ public:
 
 	int get_calibration (int32_t *ppb = 0);
 	int set_calibration (int32_t);
+	int flash_calibration ();
 
 	int set_user_output(airspyhf_user_output_t pin, airspyhf_user_output_state_t value);
 

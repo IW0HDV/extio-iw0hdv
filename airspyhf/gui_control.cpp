@@ -326,6 +326,30 @@ bool AirSpyHfCtrlGui::ButtonClick(const GuiEvent &ev)
 			cfg_->set<C_GPIO_3,int>(newStatus);
 			break;
 		}
-	}
+		return true;
+	} else
+	if (ev.id == ID_PB_FLASH_CAL) {
+		LOGT("event.id: %d flash calibration\n", ev.id);
+		if (pr_) {
+			char buf[256] = {0};
+			int ppb;
+
+			GetWindowText( GetDlgItem(ev.hWnd, ID_EDIT_PPB), buf, sizeof(buf));
+			LOGT("new calibration value: %d\n", buf );
+			if (sscanf(buf, "%d", &ppb) == 1) {
+				const char *fmt = "You are attempting to flash a new calibration value (%d).\n" \
+									"That will overwrite the current value.\n" \
+									"Do you want to proceed ? (If unsure press No/Esc to abort)";
+				snprintf (buf, sizeof(buf), fmt, ppb);
+				GuiYesNo x (buf);
+				if (x.show() == true) {
+					cfg_->set<C_CAL,int>(ppb);
+					pr_->set_calibration (ppb);
+					pr_->flash_calibration();
+				}
+			}
+		}
+		return true;
+	} else
 	return false;
 }

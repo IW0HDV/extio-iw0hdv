@@ -342,6 +342,16 @@ int AirSpyHfRadio::set_calibration (int32_t ppb)
 	}
 }
 
+int AirSpyHfRadio::flash_calibration ()
+{
+	if (device && set_calibration (ppb_cal_) == 0 && ::airspyhf_flash_calibration(device) == AIRSPYHF_SUCCESS) {
+		LOGT("airspyhf_flash_calibration: (%d)\n", ppb_cal_);
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
 int AirSpyHfRadio::set_user_output(airspyhf_user_output_t pin, airspyhf_user_output_state_t value)
 {
 	if (device && ::airspyhf_set_user_output(device, pin, value) == AIRSPYHF_SUCCESS) {
