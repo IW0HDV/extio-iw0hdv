@@ -52,6 +52,11 @@ const char * GuiError :: show() {
 	return p_;
 }
 
+const bool GuiYesNo :: show() {
+	return MessageBox (NULL, (LPCTSTR)p_, TEXT("Question"), MB_YESNO | MB_ICONQUESTION) == IDOK;
+	return p_;
+}
+
 void AppendText(const GuiEvent &ge /*HWND hDlg, int id, */, const char *pTxt)
 {
 	HWND hCtrl = GetDlgItem(ge.hWnd, ge.id);
