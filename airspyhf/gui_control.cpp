@@ -210,7 +210,7 @@ void AirSpyHfCtrlGui::EnableControls()
 	::EnableWindow(GetDlgItem(ev.hWnd, ID_PB_FLASH_CAL),  1);
 	::EnableWindow(GetDlgItem(ev.hWnd, ID_COMBO_SR),      1);
 	
-	Gui::Show();
+	//Gui::Show();
 }
 
 void AirSpyHfCtrlGui::DisableControls()
@@ -223,7 +223,7 @@ void AirSpyHfCtrlGui::DisableControls()
 	::EnableWindow(GetDlgItem(ev.hWnd, ID_PB_FLASH_CAL),  0);
 	::EnableWindow(GetDlgItem(ev.hWnd, ID_COMBO_SR),      0);
 
-	Gui::Show();
+	//Gui::Show();
 }
 
 
@@ -335,7 +335,6 @@ bool AirSpyHfCtrlGui::ButtonClick(const GuiEvent &ev)
 			int ppb;
 
 			GetWindowText( GetDlgItem(ev.hWnd, ID_EDIT_PPB), buf, sizeof(buf));
-			LOGT("new calibration value: %d\n", buf );
 			if (sscanf(buf, "%d", &ppb) == 1) {
 				const char *fmt = "You are attempting to flash a new calibration value (%d).\n" \
 									"That will overwrite the current value.\n" \
@@ -343,9 +342,12 @@ bool AirSpyHfCtrlGui::ButtonClick(const GuiEvent &ev)
 				snprintf (buf, sizeof(buf), fmt, ppb);
 				GuiYesNo x (buf);
 				if (x.show() == true) {
+					LOGT("flashing new calibration value: %d\n", ppb );
 					cfg_->set<C_CAL,int>(ppb);
 					pr_->set_calibration (ppb);
 					pr_->flash_calibration();
+				} else {
+					LOGT("flash new calibration value: %d ABORTED by user\n", ppb);
 				}
 			}
 		}

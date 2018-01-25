@@ -91,13 +91,16 @@ void Gui::Show()
 	if (pi && pi->hDialog) {
 		WSize(pi->hDialog).lower_right(x, y);
 		LOGT("xxxxxxxxxxxxxxxxxx GUI Show: move to x= %d y= %d\n", x, y);
+		// move the dialog into the lower rightmost corner
 		SetWindowPos(pi->hDialog, HWND_TOPMOST, x, y-(y*0.05), 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW);
-		//ShowWindow(pi->hDialog, SW_SHOW );
-		//SetWindowPos(pi->hDialog, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE);
+		// bring the dialog to the topmost level
 		BringWindowToTop(pi->hDialog);
-		//SetFocus(pi->hDialog);
-		//SetActiveWindow (pi->hDialog);
-		//SetForegroundWindow (pi->hDialog);
+		// brings the main program window on foreground and assign it the focus
+		// https://msdn.microsoft.com/en-us/library/windows/desktop/ms633502(v=vs.85).aspx
+		HWND hWnd = GetAncestor(pi->hDialog,GA_ROOT);
+		SetFocus(hWnd);
+		SetActiveWindow (hWnd);
+		SetForegroundWindow (hWnd);
 	}
 }
 
