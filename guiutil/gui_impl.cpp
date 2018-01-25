@@ -77,7 +77,7 @@ BOOL GuiImpl::CtrlBoxDlgProcOnCommand (
 	Gui *pGui = (Gui *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 
 	if (pGui) {
-		LOGT("********************************* Gui addr: %p pi: %p\n", pGui, pGui->pi);
+		//LOGT("********************************* Gui addr: %p pi: %p, id: %d, code: %d\n", pGui, pGui->pi, id, codeNotify);
 
 		// some button/checkbox has been clicked
 		// the lower word of wParam holds the controls ID
@@ -89,6 +89,9 @@ BOOL GuiImpl::CtrlBoxDlgProcOnCommand (
 		// The user can change the selection by clicking in the list box or by using the arrow keys. 
 		// The parent window of the combo box receives this notification code in the form of a WM_COMMAND message. 
 		if (codeNotify == CBN_SELCHANGE) pGui->ComboBoxSelChange(GuiEvent(hWnd, id));
+
+		// edit field updated
+		if (codeNotify == EN_UPDATE || codeNotify == EN_KILLFOCUS ) pGui->OkPressed(GuiEvent(hWnd, id));
 	}
 	return TRUE;
 }
@@ -109,7 +112,7 @@ BOOL CALLBACK GuiImpl::CtrlBoxDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARA
 {
 	BOOL fProcessed = FALSE;
 	Gui *pGui = (Gui *)GetWindowLongPtr(hDlg, GWLP_USERDATA);
-	//LOGT("********************************* %u %ld %d Gui addr: %p\n", uMsg, wParam, lParam, pGui);
+	//LOGT("********************************* %u %08X %04X Gui addr: %p\n", uMsg, wParam, lParam, pGui);
 
 	switch (uMsg) {
 		HANDLE_MSG(hDlg, WM_INITDIALOG, GuiImpl::CtrlBoxDlgProcOnInit);

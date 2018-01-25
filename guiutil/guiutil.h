@@ -32,10 +32,20 @@ private:
 	const char *p_;
 };
 
+class GuiYesNo {
+public:
+	GuiYesNo(const char *p) : p_(p) {}
+	const bool show();
+	operator const char *()  { return p_; }
+private:
+	const char *p_;
+};
+
 //void ShowError(const char *msg);
 void AppendText(const GuiEvent &ge /*HWND hDlg, int id, */, const char *pTxt);
 bool GetCheckBoxState(const GuiEvent& ge);
 void AppendWinTitle(const GuiEvent& ge, const char *p);
+void ResetWinTitle(const GuiEvent& ge, const char *p);
 void AppendTextToEditCtrl(const GuiEvent & ge, /*HWND hWndEdit,*/ const char * pszText);
 void DlgItemPrint(const GuiEvent &ge, const char *pszFmt, ...);
 

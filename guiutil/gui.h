@@ -96,6 +96,7 @@ protected:
 	virtual bool OnHScroll(const GuiEventHScroll& ev) { return false; }
 	virtual bool ComboBoxSelChange(const GuiEvent &ev) { return false; }
 	virtual bool OnWmUser(int n, const GuiEvent& ev) { return false; }
+	virtual bool OkPressed(const GuiEvent &ev) { return false; }
 
 	friend GuiImpl;
 	GuiImpl *pi;

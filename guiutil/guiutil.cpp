@@ -52,6 +52,10 @@ const char * GuiError :: show() {
 	return p_;
 }
 
+const bool GuiYesNo :: show() {
+	return MessageBox (NULL, (LPCTSTR)p_, TEXT("Question"), MB_YESNO | MB_ICONQUESTION) == IDYES;
+}
+
 void AppendText(const GuiEvent &ge /*HWND hDlg, int id, */, const char *pTxt)
 {
 	HWND hCtrl = GetDlgItem(ge.hWnd, ge.id);
@@ -102,5 +106,10 @@ void AppendWinTitle(const GuiEvent& ge, const char *p)
 		snprintf(szNew, sizeof(szNew), "%s %s", szBuf, p);
 		SetWindowText(ge.hWnd, szNew);
 	}
+}
+
+void ResetWinTitle(const GuiEvent& ge, const char *p)
+{
+	SetWindowText(ge.hWnd, p);
 }
 
