@@ -105,7 +105,7 @@ AirSpyHfRadio::~AirSpyHfRadio ()
 
 bool AirSpyHfRadio::status ()
 {
-	return true;
+	return ndev_ != 0;
 }
 
 const char *AirSpyHfRadio::last_error()
@@ -166,8 +166,7 @@ int AirSpyHfRadio::open ()
 		// get calibration value from radio
 		get_calibration ();
 		// querying with '0' returns the number of sample rates available
-		::airspyhf_get_samplerates(device, &n_sr_, 0);
-		if (n_sr_ > 0) {
+		if ((::airspyhf_get_samplerates(device, &n_sr_, 0) == AIRSPYHF_SUCCESS) && (n_sr_ > 0)) {
 			LOGT("sample rates available: (%d)\n", n_sr_);
 			srs_ = new uint32_t [n_sr_]; // set up a properly sized vector
 			result = ::airspyhf_get_samplerates(device, srs_, n_sr_); // read the list
@@ -179,37 +178,41 @@ int AirSpyHfRadio::open ()
 				}
 			}
 			return 0;
-		} else
+		} else {
+			LOGT("NO sample rates available: (%d)\n", n_sr_);
 			return -1;
+		}
 	}
 }
 
 
 int AirSpyHfRadio::start (int bufsize)
 {
-	// sample type is always float 32
-	#if 0
-    int result = ::airspyhf_set_sample_type(device, AIRSPY_SAMPLE_FLOAT32_IQ);
-    if( result != AIRSPYHF_SUCCESS ) {
-        //LOGT("airspy_set_sample_type() failed: %s (%d)\n", airspy_error_name((airspy_error)result), result);
+	int result;
+
+	// sample type is always float 32, do nothing
+
+	// set sample rate
+	result = set_sample_rate(sr_);
+	if( result != AIRSPYHF_SUCCESS ) {
+		LOGT("airspy_set_sample_rate() failed: (%d)\n", result);
 		return -1;
-    }
-	#endif
-	
-	set_sample_rate(sr_);
-	
-	//set_vga_gain(vga_gain_);
-	//set_mixer_gain(mixer_gain_);
-	//set_lna_gain(lna_gain_);
-	
-	int result = ::airspyhf_start(device, callback, this);
+	}
+	// setup buffer for sampler thread
+	buffer = new uint8_t [bufsize];
+	bs_ = bufsize;
+	bl_ = 0;
+	// start the sampler
+	result = ::airspyhf_start(device, callback, this);
 	if( result != AIRSPYHF_SUCCESS ) {
 		LOGT("airspy_start_rx() failed: (%d)\n", result);
+
+	  delete [] buffer;
+		buffer = 0;
+		bs_ = bl_ = 0 ;
+
 		return -1;
 	} else {
-		buffer = new uint8_t [bufsize];
-		bs_ = bufsize;
-		bl_ = 0;
 		return 0;
 	}
 }
@@ -222,6 +225,7 @@ int AirSpyHfRadio::stop ()
     return -1;
   } else {
 	  delete [] buffer;
+		buffer = 0;
 		bs_ = bl_ = 0 ;
 	  return 0;
 	}

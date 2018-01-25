@@ -159,11 +159,12 @@ int  ExtIODll::StartHW(long freq)
 {
 	LOGT("EXTIO_NS: %d  EXTIO_BASE_TYPE_SIZE: %d N:%d\n", EXTIO_NS , EXTIO_BASE_TYPE_SIZE , 2);
 
-	if (pExr) pExr->startHW(EXTIO_NS * EXTIO_BASE_TYPE_SIZE * 2);
-
-	if (pGui) pGui->DisableControls ();
-
-	return EXTIO_NS; // # of samples returned by callback
+	if (pExr && pExr->startHW(EXTIO_NS * EXTIO_BASE_TYPE_SIZE * 2) == 0) {
+		if (pGui) pGui->DisableControls ();
+		return EXTIO_NS; // # of samples returned by callback
+	} else {
+		return -1;
+	}
 }
 
 
