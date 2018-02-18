@@ -39,6 +39,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include "airspyhf.h"
 #include "airspyhf_commands.h"
 
+// C++ guard in order to avoid compiler warning IW0HDV 7/1/2018
 #ifndef __cplusplus
 #ifndef bool
 typedef int bool;
@@ -527,6 +528,7 @@ static void airspyhf_open_exit(airspyhf_device_t* device)
 	device->usb_context = NULL;
 }
 
+// commented out in order to avoid compiler warning IW0HDV 7/1/2018
 #if 0
 static void upper_string(unsigned char *string, size_t len)
 {
