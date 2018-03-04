@@ -393,8 +393,9 @@ int AirSpyHfRadio::set_agc_threshold(unsigned v)
 }
 int AirSpyHfRadio::set_attenuator(unsigned v)
 {
-	if (device && ::airspyhf_set_hf_att(device, att_ = v) == AIRSPYHF_SUCCESS) {
-		LOGT("airspyhf_set_hf_attenuator: (%d)\n", att_);
+	att_ = v;
+	if (device && ::airspyhf_set_hf_att(device, att_/6) == AIRSPYHF_SUCCESS) {
+		LOGT("airspyhf_set_hf_attenuator: %d(%d)\n", v, att_/6);
 		return 0;
 	} else {
 		return -1;

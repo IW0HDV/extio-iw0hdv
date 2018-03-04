@@ -141,12 +141,12 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 	    // http://msdn.microsoft.com/en-us/library/windows/desktop/bb760238%28v=vs.85%29.aspx
 			//
 			HWND sliderAtt = GetDlgItem(ev.hWnd, ID_SLIDER_ATT);
-			SendMessage(sliderAtt, TBM_SETRANGE,    (WPARAM)TRUE, (LPARAM)MAKELONG(0, 48));
-			SendMessage(sliderAtt, TBM_SETTICFREQ,  (WPARAM)1,  0);
-			int att = cfg_->get<C_ATTEN,int>();
-			if (pr_) pr_->set_attenuator(att);
-			SendMessage(sliderAtt, TBM_SETPOS, (WPARAM)TRUE, att);
-			DlgItemPrint( GuiEvent (GetDlgItem(ev.hWnd, ID_ST_ATT_VAL), 0), "%d", att);
+			SendMessage(sliderAtt, TBM_SETRANGE,    (WPARAM)TRUE, (LPARAM)MAKELONG(0, 8));
+			SendMessage(sliderAtt, TBM_SETTICFREQ,  (WPARAM)1,    (LPARAM)0);
+			int att_db = cfg_->get<C_ATTEN,int>();
+			if (pr_) pr_->set_attenuator(att_db);
+			SendMessage(sliderAtt, TBM_SETPOS, (WPARAM)TRUE, att_db/6);
+			DlgItemPrint( GuiEvent (GetDlgItem(ev.hWnd, ID_ST_ATT_VAL), 0), "%d", att_db);
 			// refresh logic
 			RefreshHfControls();
 		}
@@ -212,7 +212,7 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 	if (pr_) {
 		ResetWinTitle(GuiEvent(pi->hDialog, 0), " S/N:");
 		AppendWinTitle(GuiEvent(pi->hDialog, 0), pr_->get_serial()); // device serial number
-		AppendWinTitle(GuiEvent(pi->hDialog, 0), " - ");
+		AppendWinTitle(GuiEvent(pi->hDialog, 0), " - firmware version: ");
 		AppendWinTitle(GuiEvent(pi->hDialog, 0), pr_->firmware_version_string()); // device firmware version
 	}
 
@@ -428,10 +428,11 @@ bool  AirSpyHfCtrlGui::OnHScroll(const GuiEventHScroll& ev)
 {
 	if (GetDlgItem(ev.hWnd, ID_SLIDER_ATT) == ev.hwndCtl) {
 		DWORD newPos = SendMessage(GetDlgItem(ev.hWnd, ID_SLIDER_ATT), TBM_GETPOS, 0, 0);
-		DlgItemPrint( GuiEvent (GetDlgItem(ev.hWnd, ID_ST_ATT_VAL), 0), "%d", newPos);
-		LOGT("New ATT value: %d\n", newPos);
-		if (pr_) pr_->set_attenuator (newPos);
-		cfg_->set<C_ATTEN,int>(newPos);
+		int att_db = newPos*6;
+		DlgItemPrint( GuiEvent (GetDlgItem(ev.hWnd, ID_ST_ATT_VAL), 0), "%d", att_db);
+		LOGT("New ATT CONTROL position: %d value in dB: %d\n", newPos, att_db);
+		if (pr_) pr_->set_attenuator (att_db);
+		cfg_->set<C_ATTEN,int>(att_db);
 		return true;
 	} else
 		return false;

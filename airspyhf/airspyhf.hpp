@@ -56,7 +56,7 @@ public:
 	int set_lna(unsigned v);
 	int set_agc(unsigned v);
 	int set_agc_threshold(unsigned v);
-	int set_attenuator(unsigned v);
+	int set_attenuator(unsigned v);  // 0-48 dB, sent to device with 6 dB steps (0-8)
 
 	int get_calibration (int32_t *ppb = 0);
 	int set_calibration (int32_t);
