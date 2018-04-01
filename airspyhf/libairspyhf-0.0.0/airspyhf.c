@@ -1,9 +1,9 @@
-/*            
-Copyright (c) 2013, Michael Ossmann <mike@ossmann.com>
-Copyright (c) 2012, Jared Boone <jared@sharebrained.com>
-Copyright (c) 2013-2017, Youssef Touil <youssef@airspy.com>
+/*
+Copyright (c) 2013-2018, Youssef Touil <youssef@airspy.com>
 Copyright (c) 2013-2017, Ian Gilmour <ian@sdrsharp.com>
 Copyright (c) 2013-2017, Benjamin Vernoux <bvernoux@airspy.com>
+Copyright (c) 2013, Michael Ossmann <mike@ossmann.com>
+Copyright (c) 2012, Jared Boone <jared@sharebrained.com>
 
 All rights reserved.
 
@@ -35,7 +35,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include <pthread.h>
 #include <math.h>
 
-#include "iqbalancer.h"  
+#include "iqbalancer.h"
 #include "airspyhf.h"
 #include "airspyhf_commands.h"
 
@@ -104,6 +104,7 @@ struct airspyhf_device
 	volatile uint32_t freq_khz;
 	volatile int32_t freq_shift;
 	volatile int32_t calibration_ppb;
+	uint8_t enable_dsp;
 	airspyhf_complex_float_t vec;
 	iq_balancer_t iq_balancer;
 	uint32_t transfer_count;
@@ -308,15 +309,18 @@ static void convert_samples(airspyhf_device_t* device, airspyhf_complex_int16_t 
 		dest[i].im = src[i].im * scale;
 	}
 
-	iq_balancer_process(&device->iq_balancer, dest, count);
-
-	for (i = 0; i < count; i++)
+	if (device->enable_dsp)
 	{
-		rotate_complex(&vec, &rot);
-		multiply_complex_complex(&dest[i], &vec);
-	}
+		iq_balancer_process(&device->iq_balancer, dest, count);
 
-	device->vec = vec;
+		for (i = 0; i < count; i++)
+		{
+			rotate_complex(&vec, &rot);
+			multiply_complex_complex(&dest[i], &vec);
+		}
+
+		device->vec = vec;
+	}
 }
 
 static void* consumer_threadproc(void *arg)
@@ -879,6 +883,7 @@ static int airspyhf_open_init(airspyhf_device_t** device, uint64_t serial_number
 	lib_device->freq_shift = 0;
 	lib_device->vec.re = 1.0f;
 	lib_device->vec.im = 0.0f;
+	lib_device->enable_dsp = 1;
 
 	if (airspyhf_config_read(lib_device, (uint8_t *) &record, sizeof(record)) == AIRSPYHF_SUCCESS)
 	{
@@ -1204,6 +1209,12 @@ int ADDCALL airspyhf_set_calibration(airspyhf_device_t* device, int32_t ppb)
 	return airspyhf_set_freq(device, device->freq_hz);
 }
 
+int ADDCALL airspyhf_set_optimal_iq_correction_point(airspyhf_device_t* device, float w)
+{
+	iq_balancer_set_optimal_point(&device->iq_balancer, w);
+	return AIRSPYHF_SUCCESS;
+}
+
 int ADDCALL airspyhf_board_partid_serialno_read(airspyhf_device_t* device, airspyhf_read_partid_serialno_t* read_partid_serialno)
 {
 	uint8_t length;
@@ -1369,5 +1380,11 @@ int ADDCALL airspyhf_set_hf_lna(airspyhf_device_t* device, uint8_t flag)
 		return AIRSPYHF_ERROR;
 	}
 
+	return AIRSPYHF_SUCCESS;
+}
+
+int ADDCALL airspyhf_set_lib_dsp(airspyhf_device_t* device, uint8_t flag)
+{
+	device->enable_dsp = flag;
 	return AIRSPYHF_SUCCESS;
 }

@@ -1,9 +1,9 @@
 /*
-Copyright (c) 2013, Michael Ossmann <mike@ossmann.com>
-Copyright (c) 2012, Jared Boone <jared@sharebrained.com>
-Copyright (c) 2013-2017, Youssef Touil <youssef@airspy.com>
+Copyright (c) 2013-2018, Youssef Touil <youssef@airspy.com>
 Copyright (c) 2013-2017, Ian Gilmour <ian@sdrsharp.com>
 Copyright (c) 2013-2017, Benjamin Vernoux <bvernoux@airspy.com>
+Copyright (c) 2013, Michael Ossmann <mike@ossmann.com>
+Copyright (c) 2012, Jared Boone <jared@sharebrained.com>
 
 All rights reserved.
 
@@ -11,9 +11,9 @@ Redistribution and use in source and binary forms, with or without modification,
 
 		Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
 		Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the 
-	documentation and/or other materials provided with the distribution.
+		documentation and/or other materials provided with the distribution.
 		Neither the name of Airspy HF+ nor the names of its contributors may be used to endorse or promote products derived from this software
-	without specific prior written permission.
+		without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
 THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -28,10 +28,10 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 
 #include <stdint.h>
 
-#define AIRSPYHF_VERSION "1.0.0"
+#define AIRSPYHF_VERSION "1.1.5"
 #define AIRSPYHF_VER_MAJOR 1
-#define AIRSPYHF_VER_MINOR 0
-#define AIRSPYHF_VER_REVISION 0
+#define AIRSPYHF_VER_MINOR 1
+#define AIRSPYHF_VER_REVISION 5
 
 #define AIRSPYHF_ENDPOINT_IN (1)
 
@@ -127,10 +127,12 @@ extern ADDAPI int ADDCALL airspyhf_start(airspyhf_device_t* device, airspyhf_sam
 extern ADDAPI int ADDCALL airspyhf_stop(airspyhf_device_t* device);
 extern ADDAPI int ADDCALL airspyhf_is_streaming(airspyhf_device_t* device);
 extern ADDAPI int ADDCALL airspyhf_set_freq(airspyhf_device_t* device, const uint32_t freq_hz);
+extern ADDAPI int ADDCALL airspyhf_set_lib_dsp(airspyhf_device_t* device, const uint8_t flag);
 extern ADDAPI int ADDCALL airspyhf_get_samplerates(airspyhf_device_t* device, uint32_t* buffer, const uint32_t len);
 extern ADDAPI int ADDCALL airspyhf_set_samplerate(airspyhf_device_t* device, uint32_t samplerate);
 extern ADDAPI int ADDCALL airspyhf_get_calibration(airspyhf_device_t* device, int32_t* ppb);
 extern ADDAPI int ADDCALL airspyhf_set_calibration(airspyhf_device_t* device, int32_t ppb);
+extern ADDAPI int ADDCALL airspyhf_set_optimal_iq_correction_point(airspyhf_device_t* device, float w);
 extern ADDAPI int ADDCALL airspyhf_flash_calibration(airspyhf_device_t* device);
 extern ADDAPI int ADDCALL airspyhf_board_partid_serialno_read(airspyhf_device_t* device, airspyhf_read_partid_serialno_t* read_partid_serialno);
 extern ADDAPI int ADDCALL airspyhf_version_string_read(airspyhf_device_t* device, char* version, uint8_t length);
