@@ -46,7 +46,7 @@ public:
 	int set_sample_rate (int sr);
 	int get_sample_rate ();
 
-	int set_frequency (int);
+	int set_frequency (const unsigned);
 	int get_frequency ();
 
 	/* Parameter value shall be between 0 and 15 */
@@ -85,7 +85,10 @@ public:
 	int get_samplerates () { return n_sr_; }
 	static void get_lib_version (int &major, int &minor, int &revision);
 	const char* version_string ();
-	
+
+	int get_calibration (int32_t *ppm = 0);
+	int set_calibration (int32_t);
+
 protected:	
 
 	virtual int data_available (void *, int) = 0;
@@ -100,15 +103,18 @@ protected:
 private:
 	struct airspy_device* device;
 	uint64_t serial_number_val;
-    char     serial[128];
-    // callback buffer	
+	char     serial[128];
+	// callback buffer
 	int bs_;
 	uint8_t *buffer;
 	int bl_;
-    static int callback(airspy_transfer_t *);
-    char version[256];
+	static int callback(airspy_transfer_t *);
+
+	char version[256];
+
 	uint32_t   n_sr_;
 	uint32_t  *srs_;
+	uint32_t   ppm_cal_;
 };
 
 #endif

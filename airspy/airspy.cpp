@@ -34,7 +34,8 @@ AirSpyRadio::AirSpyRadio ():
 	buffer(0),
 	bl_(0),
 	n_sr_(0),
-	srs_(0)
+	srs_(0),
+	ppm_cal_(0)
 {
 	strcpy (serial,"");
 	int result = airspy_init();
@@ -165,15 +166,23 @@ int AirSpyRadio::get_sample_rate ()
 	return sr_;
 }
 
-
-int AirSpyRadio::set_frequency (int nf)
+//
+// change the central frequency applying the calibration
+//
+int AirSpyRadio::set_frequency (const unsigned nf)
 {
-	int result = airspy_set_freq(device, f_ = nf);
-    if( result != AIRSPY_SUCCESS ) {
-        LOGT("airspy_set_freq() failed: %s (%d)\n", airspy_error_name((airspy_error)result), result);
-        return -1;
-    } else 
-	    return 0;
+	uint32_t corr_f = (uint32_t)(nf * (1.0 + ((float)ppm_cal_ * 1e-6)));
+
+	int result = airspy_set_freq(device, corr_f );
+//LOGT("airspy_set_freq(): %d %d %d %f %f\n", nf, ppm_cal_, corr_f, ((float)ppm_cal_ * 1e-6), (1.0 + ((float)ppm_cal_ * 1e-6)));
+
+	if( result != AIRSPY_SUCCESS ) {
+		LOGT("airspy_set_freq() failed: %s (%d)\n", airspy_error_name((airspy_error)result), result);
+		return -1;
+	} else {
+		f_ = nf;
+		return 0;
+	}
 }
 
 int AirSpyRadio::get_frequency ()
@@ -327,3 +336,19 @@ const int AirSpyRadio::get_samplerate_n (unsigned int n)
 		return -1;
 }
 
+int AirSpyRadio::get_calibration (int32_t *ppm)
+{
+	if (ppm) {
+		*ppm = ppm_cal_;
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
+
+int AirSpyRadio::set_calibration (int32_t ppm)
+{
+	ppm_cal_ = ppm;
+	return set_frequency(get_frequency());
+}

@@ -28,3 +28,6 @@
 #define IDC_ST_SENSITIVITY                      40017
 #define IDRB_LINEARITY                          40018
 #define IDRB_SENSITIVITY                        40019
+#define IDC_ST_CALIBPPM                         40020
+#define IDC_EDIT_PPM                            40021
+#define IDC_SC_PPM                              40022

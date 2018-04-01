@@ -38,7 +38,7 @@ AirSpyCtrlGui::AirSpyCtrlGui(PEXTPRADIO<EXTIO_BASE_TYPE> &pr):
 	
 	if (pr_) fn += pr_->get_serial();
 	
-	cfg_.reset ( new Config<AIRSPY_CFG_T>((fn+".txt").c_str(), std::make_tuple(-1, 5, 10, 6, 0, 0, 0, 10, 10, S_MAN)) );
+	cfg_.reset ( new Config<AIRSPY_CFG_T>((fn+".txt").c_str(), std::make_tuple(-1, 5, 10, 6, 0, 0, 0, 10, 10, S_MAN, 0)) );
 
 	LOGT("******* AirSpyCtrlGui: pImpl: %p Gui addr: %p Cfg: %p, (%s)\n", pi, this, cfg_.get(), fn.c_str());
 
@@ -160,9 +160,28 @@ bool AirSpyCtrlGui::OnInit(const GuiEvent& ev)
 	if (pr_) pr_->set_rf_bias(bias);	
     CheckDlgButton (ev.hWnd, IDCB_BIAS_TEE, bias);
 
-    //
-    // setup for tool bar
-    //	
+	// calibration initialization
+	if (pr_) {
+			char buf[BUFSIZ];
+			// read calibration from config file
+			int32_t ppm = cfg_->get<C_CAL,int>();
+			LOGT("Calibration from cfg(%p): %d\n", cfg_.get(), ppm);
+
+			// set the PPB entry field text
+			snprintf (buf, sizeof(buf), "%d", ppm);
+			SendMessage(GetDlgItem(ev.hWnd, IDC_EDIT_PPM), WM_SETTEXT, 0, (LPARAM)buf);
+
+			//
+			// select the range of spin control
+			// the max value is negative in order to get going the control with a natural behavior
+			// pressing the UP arrow the value increases
+			// https://blogs.msdn.microsoft.com/oldnewthing/20051222-12/?p=32873
+			//
+			SendMessage(GetDlgItem(ev.hWnd, IDC_SC_PPM), UDM_SETRANGE, 0, MAKELPARAM(-10000, 10000));
+	}
+	//
+	// setup for tool bar
+	//
 	HICON icon = LoadIcon(Dll::GetMyHandle(), MAKEINTRESOURCE(IDI_ICON1));
 	
 	SendMessage(ev.hWnd, WM_SETICON, ICON_BIG, (LPARAM)icon);
@@ -442,3 +461,22 @@ void AirSpyCtrlGui::set_gain_mode (GuiGain gg)
 	}
 	cfg_->set< C_GAIN_TYPE, short>(gg);
 }
+
+
+bool AirSpyCtrlGui::OkPressed(const GuiEvent &ev)
+{
+	if (ev.id == IDC_EDIT_PPM) {
+		char buf[128] = {0};
+		int ppm;
+
+		GetWindowText( GetDlgItem(ev.hWnd, IDC_EDIT_PPM), buf, sizeof(buf));
+		LOGT("event.id: %d item [%s] selected in PPM edit\n", ev.id, buf );
+	  if (sscanf(buf, "%d", &ppm) == 1) {
+			if (pr_) pr_-> set_calibration (ppm);
+			cfg_->set<C_CAL,int>(ppm);
+		}
+		return true;
+	}
+	return false;
+}
+
