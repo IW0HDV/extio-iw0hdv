@@ -51,6 +51,12 @@ public:
 
 	int set_frequency (int);
 	int get_frequency ();
+	bool hf ();
+
+	int set_lna(unsigned v);
+	int set_agc(unsigned v);
+	int set_agc_threshold(unsigned v);
+	int set_attenuator(unsigned v);  // 0-48 dB, sent to device with 6 dB steps (0-8)
 
 	int get_calibration (int32_t *ppb = 0);
 	int set_calibration (int32_t);
@@ -59,12 +65,12 @@ public:
 	int set_user_output(airspyhf_user_output_t pin, airspyhf_user_output_state_t value);
 
 	/* utilities */
-	const char* board_id_name();
+	const char* board_id_name() { return "AirSpyHf board"; }
 
 	const int get_samplerate_n (unsigned int n);
 	int get_samplerates () { return n_sr_; }
 	static void get_lib_version (int &major, int &minor, int &revision);
-	const char* version_string ();
+	const char* firmware_version_string ();
 	
 protected:	
 
@@ -87,6 +93,10 @@ public:
 	uint32_t   n_sr_;
 	uint32_t  *srs_;
 	int32_t    ppb_cal_;
+	uint8_t    lna_;
+	uint8_t    agc_;
+	uint8_t    agc_threshold_;
+	uint8_t    att_;
 
 	static unsigned int ndev_;
 	static uint64_t *serials_;

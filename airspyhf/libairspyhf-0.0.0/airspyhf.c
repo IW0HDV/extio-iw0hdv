@@ -1,9 +1,9 @@
 /*
-Copyright (c) 2013, Michael Ossmann <mike@ossmann.com>
-Copyright (c) 2012, Jared Boone <jared@sharebrained.com>
-Copyright (c) 2013-2017, Youssef Touil <youssef@airspy.com>
+Copyright (c) 2013-2018, Youssef Touil <youssef@airspy.com>
 Copyright (c) 2013-2017, Ian Gilmour <ian@sdrsharp.com>
 Copyright (c) 2013-2017, Benjamin Vernoux <bvernoux@airspy.com>
+Copyright (c) 2013, Michael Ossmann <mike@ossmann.com>
+Copyright (c) 2012, Jared Boone <jared@sharebrained.com>
 
 All rights reserved.
 
@@ -72,8 +72,6 @@ typedef int bool;
 static const char str_prefix_serial_airspyhf[STR_PREFIX_SERIAL_AIRSPYHF_SIZE] =
 { 'A', 'I', 'R', 'S', 'P', 'Y', 'H', 'F', ' ', 'S', 'N', ':' };
 
-#define VERSION_STRING_SIZE (64)
-
 #ifdef AIRSPYHF_BIG_ENDIAN
 #define TO_LE(x) __builtin_bswap32(x)
 #else
@@ -106,6 +104,7 @@ struct airspyhf_device
 	volatile uint32_t freq_khz;
 	volatile int32_t freq_shift;
 	volatile int32_t calibration_ppb;
+	uint8_t enable_dsp;
 	airspyhf_complex_float_t vec;
 	iq_balancer_t iq_balancer;
 	uint32_t transfer_count;
@@ -310,15 +309,18 @@ static void convert_samples(airspyhf_device_t* device, airspyhf_complex_int16_t 
 		dest[i].im = src[i].im * scale;
 	}
 
-	iq_balancer_process(&device->iq_balancer, dest, count);
-
-	for (i = 0; i < count; i++)
+	if (device->enable_dsp)
 	{
-		rotate_complex(&vec, &rot);
-		multiply_complex_complex(&dest[i], &vec);
-	}
+		iq_balancer_process(&device->iq_balancer, dest, count);
 
-	device->vec = vec;
+		for (i = 0; i < count; i++)
+		{
+			rotate_complex(&vec, &rot);
+			multiply_complex_complex(&dest[i], &vec);
+		}
+
+		device->vec = vec;
+	}
 }
 
 static void* consumer_threadproc(void *arg)
@@ -881,6 +883,7 @@ static int airspyhf_open_init(airspyhf_device_t** device, uint64_t serial_number
 	lib_device->freq_shift = 0;
 	lib_device->vec.re = 1.0f;
 	lib_device->vec.im = 0.0f;
+	lib_device->enable_dsp = 1;
 
 	if (airspyhf_config_read(lib_device, (uint8_t *) &record, sizeof(record)) == AIRSPYHF_SUCCESS)
 	{
@@ -1206,6 +1209,12 @@ int ADDCALL airspyhf_set_calibration(airspyhf_device_t* device, int32_t ppb)
 	return airspyhf_set_freq(device, device->freq_hz);
 }
 
+int ADDCALL airspyhf_set_optimal_iq_correction_point(airspyhf_device_t* device, float w)
+{
+	iq_balancer_set_optimal_point(&device->iq_balancer, w);
+	return AIRSPYHF_SUCCESS;
+}
+
 int ADDCALL airspyhf_board_partid_serialno_read(airspyhf_device_t* device, airspyhf_read_partid_serialno_t* read_partid_serialno)
 {
 	uint8_t length;
@@ -1233,7 +1242,7 @@ int ADDCALL airspyhf_board_partid_serialno_read(airspyhf_device_t* device, airsp
 int ADDCALL airspyhf_version_string_read(airspyhf_device_t* device, char* version, uint8_t length)
 {
 	int result;
-	char version_local[VERSION_STRING_SIZE];
+	char version_local[MAX_VERSION_STRING_SIZE];
 
 	result = libusb_control_transfer(
 		device->usb_device,
@@ -1241,8 +1250,8 @@ int ADDCALL airspyhf_version_string_read(airspyhf_device_t* device, char* versio
 		AIRSPYHF_GET_VERSION_STRING,
 		0,
 		0,
-		(unsigned char*)version_local,
-		(VERSION_STRING_SIZE - 1),
+		(unsigned char*) version_local,
+		(MAX_VERSION_STRING_SIZE - 1),
 		0);
 
 	if (result < 0)
@@ -1283,5 +1292,99 @@ int ADDCALL airspyhf_set_user_output(airspyhf_device_t* device, airspyhf_user_ou
 		return AIRSPYHF_ERROR;
 	}
 
+	return AIRSPYHF_SUCCESS;
+}
+
+int ADDCALL airspyhf_set_hf_agc(airspyhf_device_t* device, uint8_t flag)
+{
+	int result;
+
+	result = libusb_control_transfer(
+		device->usb_device,
+		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
+		AIRSPYHF_SET_HF_AGC,
+		(uint16_t) flag,
+		0,
+		NULL,
+		0,
+		0);
+
+	if (result < 0)
+	{
+		return AIRSPYHF_ERROR;
+	}
+
+	return AIRSPYHF_SUCCESS;
+}
+
+int ADDCALL airspyhf_set_hf_agc_threshold(airspyhf_device_t* device, uint8_t flag)
+{
+	int result;
+
+	result = libusb_control_transfer(
+		device->usb_device,
+		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
+		AIRSPYHF_SET_HF_AGC_THRESHOLD,
+		(uint16_t) flag,
+		0,
+		NULL,
+		0,
+		0);
+
+	if (result < 0)
+	{
+		return AIRSPYHF_ERROR;
+	}
+
+	return AIRSPYHF_SUCCESS;
+}
+
+int ADDCALL airspyhf_set_hf_att(airspyhf_device_t* device, uint8_t value)
+{
+	int result;
+
+	result = libusb_control_transfer(
+		device->usb_device,
+		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
+		AIRSPYHF_SET_HF_ATT,
+		(uint16_t) value,
+		0,
+		NULL,
+		0,
+		0);
+
+	if (result < 0)
+	{
+		return AIRSPYHF_ERROR;
+	}
+
+	return AIRSPYHF_SUCCESS;
+}
+
+int ADDCALL airspyhf_set_hf_lna(airspyhf_device_t* device, uint8_t flag)
+{
+	int result;
+
+	result = libusb_control_transfer(
+		device->usb_device,
+		LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
+		AIRSPYHF_SET_HF_LNA,
+		(uint16_t) flag,
+		0,
+		NULL,
+		0,
+		0);
+
+	if (result < 0)
+	{
+		return AIRSPYHF_ERROR;
+	}
+
+	return AIRSPYHF_SUCCESS;
+}
+
+int ADDCALL airspyhf_set_lib_dsp(airspyhf_device_t* device, uint8_t flag)
+{
+	device->enable_dsp = flag;
 	return AIRSPYHF_SUCCESS;
 }

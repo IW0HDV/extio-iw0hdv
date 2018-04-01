@@ -1,15 +1,15 @@
 /*
-Copyright (c) 2016-2017, Youssef Touil <youssef@airspy.com>
+Copyright (c) 2016-2018, Youssef Touil <youssef@airspy.com>
 
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
-Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the
-documentation and/or other materials provided with the distribution.
-Neither the name of Airspy HF+ nor the names of its contributors may be used to endorse or promote products derived from this software
-without specific prior written permission.
+		Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+		Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the
+		documentation and/or other materials provided with the distribution.
+		Neither the name of Airspy HF+ nor the names of its contributors may be used to endorse or promote products derived from this software
+		without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -152,8 +152,8 @@ static void cancel_dc(iq_balancer_t *iq_balancer, airspyhf_complex_float_t* iq, 
 
 	for (i = 0; i < length; i++)
 	{
-		iavg += DCAlpha * (iq[i].re - iavg);
-		qavg += DCAlpha * (iq[i].im - qavg);
+		iavg += DcTimeConst * (iq[i].re - iavg);
+		qavg += DcTimeConst * (iq[i].im - qavg);
 
 		iq[i].re -= iavg;
 		iq[i].im -= qavg;
@@ -163,22 +163,25 @@ static void cancel_dc(iq_balancer_t *iq_balancer, airspyhf_complex_float_t* iq, 
 	iq_balancer->qavg = qavg;
 }
 
-static void adjust_phase(iq_balancer_t *iq_balancer, airspyhf_complex_float_t *iq, float phase)
+static void adjust_phase(airspyhf_complex_float_t *iq, float phase)
 {
 	int i;
-	float gain = (float) iq_balancer->gain;
 	for (i = 0; i < FFTBins; i++)
 	{
-		iq[i].re += phase * iq[i].im;
-		iq[i].im *= gain;
+		float re = iq[i].re;
+		float im = iq[i].im;
+
+		iq[i].re += phase * im;
+		iq[i].im += phase * re;
 	}
 }
 
-static void multiply_complex_complex(airspyhf_complex_float_t *a, const airspyhf_complex_float_t *b)
+static airspyhf_complex_float_t multiply_complex_complex(airspyhf_complex_float_t *a, const airspyhf_complex_float_t *b)
 {
-	float re = a->re * b->re - a->im * b->im;
-	a->im = a->im * b->re + a->re * b->im;
-	a->re = re;
+	airspyhf_complex_float_t result;
+	result.re = a->re * b->re - a->im * b->im;
+	result.im = a->im * b->re + a->re * b->im;
+	return result;
 }
 
 static float fsign(const float x)
@@ -188,31 +191,66 @@ static float fsign(const float x)
 
 static float utility(iq_balancer_t *iq_balancer, airspyhf_complex_float_t* iq, float phase)
 {
-	int i, j;
-	airspyhf_complex_float_t acc;
-	airspyhf_complex_float_t prod;
-
 	airspyhf_complex_float_t fftPtr[FFTBins * sizeof(airspyhf_complex_float_t)];
 
 	memcpy(fftPtr, iq, FFTBins * sizeof(airspyhf_complex_float_t));
 
-	adjust_phase(iq_balancer, fftPtr, phase);
+	adjust_phase(fftPtr, phase);
 
 	window(fftPtr, FFTBins);
 	fft(fftPtr, FFTBins);
 
-	acc.re = 0.0f;
-	acc.im = 0.0f;
+	float acc1 = 0.0f;
+	float acc2 = 0.0f;
+	float max1 = 0.0f;
+	float max2 = 0.0f;
+	int count1 = 0;
+	int count2 = 0;
 
-	for (i = 1, j = FFTBins - 1; i < FFTBins / 2; i++, j--)
+	for (int i = 1 + BinsToSkip, j = FFTBins - 1 - BinsToSkip; i < FFTBins / 2 - BinsToSkip; i++, j--)
 	{
-		prod = fftPtr[i];
-		multiply_complex_complex(&prod, fftPtr + j);
-		acc.re += prod.re;
-		acc.im += prod.im;
+		airspyhf_complex_float_t prod = multiply_complex_complex(fftPtr + i, fftPtr + j);
+		float corr = prod.re * prod.re + prod.im * prod.im;
+		float m1 = fftPtr[i].re * fftPtr[i].re + fftPtr[i].im * fftPtr[i].im;
+		float m2 = fftPtr[j].re * fftPtr[j].re + fftPtr[j].im * fftPtr[j].im;
+
+		if (i >= iq_balancer->optimal_bin - BinsToOptimize / 2 && i <= iq_balancer->optimal_bin + BinsToOptimize / 2)
+		{
+			acc1 += corr;
+			if (max1 < m1)
+			{
+				max1 = m1;
+			}
+			if (max1 < m2)
+			{
+				max1 = m2;
+			}
+			count1++;
+		}
+		else
+		{
+			acc2 += corr;
+			if (max2 < m1)
+			{
+				max2 = m1;
+			}
+			if (max2 < m2)
+			{
+				max2 = m2;
+			}
+			count2++;
+		}
 	}
 
-	return acc.re * acc.re + acc.im * acc.im;
+	if (count1 == 0)
+	{
+		return acc2;
+	}
+
+	acc1 /= count1;
+	acc2 /= count2;
+
+	return acc1 * max1 * BoostFactor + acc2 * max2;
 }
 
 static void estimate_phase_imbalance(iq_balancer_t *iq_balancer, airspyhf_complex_float_t* iq)
@@ -224,7 +262,7 @@ static void estimate_phase_imbalance(iq_balancer_t *iq_balancer, airspyhf_comple
 	{
 		phase = MaxPhaseCorrection;
 	}
-	if (phase < -MaxPhaseCorrection)
+	else if (phase < -MaxPhaseCorrection)
 	{
 		phase = -MaxPhaseCorrection;
 	}
@@ -265,23 +303,40 @@ static void adjust_phase_amplitude(iq_balancer_t *iq_balancer, airspyhf_complex_
 
 	for (i = 0; i < length; i++)
 	{
+		float re = iq[i].re;
+		float im = iq[i].im;
+
 		float phase = (i * iq_balancer->last_phase + (length - 1 - i) * iq_balancer->phase) * scale;
 
-		iq[i].re += phase * iq[i].im;
+		iq[i].re += phase * im;
+		iq[i].im += phase * re;
 
-		float re = iq[i].re * iq[i].re;
-		float im = iq[i].im * iq[i].im;
+		re = iq[i].re * iq[i].re;
+		im = iq[i].im * iq[i].im;
 
-		iq_balancer->iampavg += DCAlpha * (re - iq_balancer->iampavg);
-		iq_balancer->qampavg += DCAlpha * (im - iq_balancer->qampavg);
+		iq_balancer->iampavg += BalanceTimeConst * (re - iq_balancer->iampavg);
+		iq_balancer->qampavg_pre += BalanceTimeConst * (im - iq_balancer->qampavg_pre);
 
-		if (iq_balancer->qampavg != 0)
+		if (iq_balancer->qampavg_pre != 0)
 		{
-			double gain = sqrt(iq_balancer->iampavg / iq_balancer->qampavg);
-			iq_balancer->gain = iq_balancer->gain + GainAlpha * (gain - iq_balancer->gain);
+			double gain = sqrt(iq_balancer->iampavg / iq_balancer->qampavg_pre);
+			iq_balancer->gain = iq_balancer->gain + iq_balancer->gain_alpha * (gain - iq_balancer->gain);
 		}
 
-		iq[i].im *= (float)iq_balancer->gain;
+		iq[i].im *= (float) iq_balancer->gain;
+
+		iq_balancer->qampavg_post += BalanceTimeConst * (iq[i].im * iq[i].im - iq_balancer->qampavg_post);
+
+		if (iq_balancer->qampavg_post != 0)
+		{
+			double gain_balance = sqrt(iq_balancer->iampavg / iq_balancer->qampavg_post);
+			double alpha_contribution = AlphaContributionScale * fabs(1.0 - gain_balance);
+			if (alpha_contribution < MinAlphaContribution)
+				alpha_contribution = MinAlphaContribution;
+			else if (alpha_contribution > MaxAlphaContribution)
+				alpha_contribution = MaxAlphaContribution;
+			iq_balancer->gain_alpha += BalanceTimeConst * (alpha_contribution - iq_balancer->gain_alpha);
+		}
 	}
 
 	iq_balancer->last_phase = iq_balancer->phase;
@@ -307,6 +362,20 @@ void iq_balancer_process(iq_balancer_t *iq_balancer, airspyhf_complex_float_t* i
 	adjust_phase_amplitude(iq_balancer, iq, length);
 }
 
+void iq_balancer_set_optimal_point(iq_balancer_t *iq_balancer, float w)
+{
+	if (w < 0)
+	{
+		w = -w;
+	}
+	if (w > 0.5f)
+	{
+		w = 0.5;
+	}
+
+	iq_balancer->optimal_bin = (int) (FFTBins * w);
+}
+
 void iq_balancer_init(iq_balancer_t *iq_balancer)
 {
 	iq_balancer->iavg = 0.0f;
@@ -314,10 +383,13 @@ void iq_balancer_init(iq_balancer_t *iq_balancer)
 	iq_balancer->phase = 0.0f;
 	iq_balancer->last_phase = 0.0f;
 	iq_balancer->step = MinimumStep;
+	iq_balancer->optimal_bin = 0;
 	iq_balancer->fail = 0;
 	iq_balancer->gain = 1.0;
-	iq_balancer->iampavg = 1.0;
-	iq_balancer->qampavg = 1.0;
+	iq_balancer->gain_alpha = InitialGainAlpha;
+	iq_balancer->iampavg = 0.0;
+	iq_balancer->qampavg_pre = 0.0;
+	iq_balancer->qampavg_post = 0.0;
 
 	__init_window();
 }

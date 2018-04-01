@@ -3,7 +3,7 @@
  *
  *  Copyright 2015 by Andrea Montefusco IW0HDV
  *
- *  Licensed under GNU General Public License 3.0 or later. 
+ *  Licensed under GNU General Public License 3.0 or later.
  *  Some rights reserved. See COPYING, AUTHORS.
  *
  * @license GPL-3.0+ <http://spdx.org/licenses/GPL-3.0+>
@@ -25,32 +25,32 @@
 #include "guievent.h"
 #include "util.h"
 #include "guiutil.h"
-#include "gui_impl.h" 
-#include "gui.h" 
+#include "gui_impl.h"
+#include "gui.h"
 #include "gui_control.h"
 #include "airspyhfw.h"
 #include "extio_airspyhf.h"
 #include <string>
 
-AirSpyHfCtrlGui::AirSpyHfCtrlGui(PEXTPRADIO<EXTIO_BASE_TYPE> &pr, ExtIODll *pExtIO): 
+AirSpyHfCtrlGui::AirSpyHfCtrlGui(PEXTPRADIO<EXTIO_BASE_TYPE> &pr, ExtIODll *pExtIO):
     Gui(IDD_AIRSPY_CONTROL_DLG), pr_(pr), pExtIO_(pExtIO), on_init_(false)
 {
 	if (pi && pi->hDialog) OnInit(GuiEvent(pi->hDialog, -1));
 }
 
-AirSpyHfCtrlGui::~AirSpyHfCtrlGui () 
+AirSpyHfCtrlGui::~AirSpyHfCtrlGui ()
 {
 }
 
 bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 {
 	on_init_ = true;
-	
+
 	LOGT("Event ref: %p\n", ev);
 
 	std::string fn("AIRSPYHF");
 	if (pr_) fn += pr_->get_serial();
-	cfg_.reset ( new Config<AIRSPYHF_CFG_T>((fn+".txt").c_str(), std::make_tuple(-1, 0, 0, 0, 0, 0) ));
+	cfg_.reset ( new Config<AIRSPYHF_CFG_T>((fn+".txt").c_str(), std::make_tuple(-1, 0, 0, 0, 0, 0, 0, 0, 0, 0) ));
 
 	LOGT("******* AirSpyHfCtrlGui: pImpl: %p Gui addr: %p Cfg: %p, (%s)\n", pi, this, cfg_.get(), fn.c_str());
 
@@ -128,6 +128,27 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 			Button_SetCheck(GetDlgItem(ev.hWnd, ID_CB_GPIO_1), (cfg_->get<C_GPIO_1,int>() == 1) ? BST_CHECKED : BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(ev.hWnd, ID_CB_GPIO_2), (cfg_->get<C_GPIO_2,int>() == 1) ? BST_CHECKED : BST_UNCHECKED);
 			Button_SetCheck(GetDlgItem(ev.hWnd, ID_CB_GPIO_3), (cfg_->get<C_GPIO_3,int>() == 1) ? BST_CHECKED : BST_UNCHECKED);
+
+			// read LNA status from configuration file and set check boxes accordingly
+			Button_SetCheck(GetDlgItem(ev.hWnd, ID_CB_LNA), (cfg_->get<C_LNA,int>() == 1) ? BST_CHECKED : BST_UNCHECKED);
+			// read AGC status from configuration file and set check boxes accordingly
+			Button_SetCheck(GetDlgItem(ev.hWnd, ID_CB_AGC), (cfg_->get<C_AGC,int>() == 1) ? BST_CHECKED : BST_UNCHECKED);
+			// read AGC THRESHOLD status from configuration file and set check boxes accordingly
+			Button_SetCheck(GetDlgItem(ev.hWnd, ID_CB_AGC_TH), (cfg_->get<C_AGC_TH,int>() == 1) ? BST_CHECKED : BST_UNCHECKED);
+			//
+			// Attenuator value
+			//
+	    // http://msdn.microsoft.com/en-us/library/windows/desktop/bb760238%28v=vs.85%29.aspx
+			//
+			HWND sliderAtt = GetDlgItem(ev.hWnd, ID_SLIDER_ATT);
+			SendMessage(sliderAtt, TBM_SETRANGE,    (WPARAM)TRUE, (LPARAM)MAKELONG(0, 8));
+			SendMessage(sliderAtt, TBM_SETTICFREQ,  (WPARAM)1,    (LPARAM)0);
+			int att_db = cfg_->get<C_ATTEN,int>();
+			if (pr_) pr_->set_attenuator(att_db);
+			SendMessage(sliderAtt, TBM_SETPOS, (WPARAM)TRUE, att_db/6);
+			DlgItemPrint( GuiEvent (GetDlgItem(ev.hWnd, ID_ST_ATT_VAL), 0), "%d", att_db);
+			// refresh logic
+			RefreshHfControls();
 		}
 	} else {
 		SendMessage(GetDlgItem(ev.hWnd, ID_COMBO_SR), CB_ADDSTRING, 0, (LPARAM)"AirSpyHf internal error, no sample rate avail");
@@ -178,21 +199,21 @@ bool AirSpyHfCtrlGui::OnInit(const GuiEvent& ev)
 
 	//
 	// setup for tool bar
-	//	
+	//
 	HICON icon = LoadIcon(Dll::GetMyHandle(), MAKEINTRESOURCE(IDI_ICON1));
-	
+
 	SendMessage(ev.hWnd, WM_SETICON, ICON_BIG, (LPARAM)icon);
 	SendMessage(ev.hWnd, WM_SETICON, ICON_SMALL, (LPARAM)icon);
-	
+
 	// Initialize the NOTIFYICONDATA structure once
 	pi->InitNotifyIconData (IDI_ICON1, icon, "AIRSPYHF extio");
 
-	// display serial number
+	// display serial number on the dialog box title bar
 	if (pr_) {
 		ResetWinTitle(GuiEvent(pi->hDialog, 0), " S/N:");
-		AppendWinTitle(GuiEvent(pi->hDialog, 0), pr_->get_serial());
-		AppendWinTitle(GuiEvent(pi->hDialog, 0), " - ");
-		AppendWinTitle(GuiEvent(pi->hDialog, 0), pr_->version_string());
+		AppendWinTitle(GuiEvent(pi->hDialog, 0), pr_->get_serial()); // device serial number
+		AppendWinTitle(GuiEvent(pi->hDialog, 0), " - firmware version: ");
+		AppendWinTitle(GuiEvent(pi->hDialog, 0), pr_->firmware_version_string()); // device firmware version
 	}
 
 	on_init_ = false;
@@ -205,11 +226,11 @@ void AirSpyHfCtrlGui::EnableControls()
 	LOGT("%s\n", "AirSpyHfCtrlGui::EnableControls");
 
 	GuiEvent ev(pi->hDialog, 0);
-	
+
 	::EnableWindow(GetDlgItem(ev.hWnd, ID_COMBO_DEVLIST), 1);
 	::EnableWindow(GetDlgItem(ev.hWnd, ID_PB_FLASH_CAL),  1);
 	::EnableWindow(GetDlgItem(ev.hWnd, ID_COMBO_SR),      1);
-	
+
 	//Gui::Show();
 }
 
@@ -226,6 +247,29 @@ void AirSpyHfCtrlGui::DisableControls()
 	//Gui::Show();
 }
 
+void AirSpyHfCtrlGui::RefreshHfControls()
+{
+	LOGT("%s\n", "AirSpyHfCtrlGui::RefreshHfControls");
+
+	GuiEvent ev(pi->hDialog, 0);
+
+	//if (pr_ && pr_->hf()) EnableAll(GuiEvent(GetDlgItem(ev.hWnd, ID_GBOX_HF_CONTROLS),0), GuiEvent(0, true));
+	//else  EnableAll(GuiEvent(GetDlgItem(ev.hWnd, ID_GBOX_HF_CONTROLS),0), GuiEvent(0, false));
+
+	if (IsDlgButtonChecked(ev.hWnd, ID_CB_AGC) == BST_CHECKED) {
+		::EnableWindow(GetDlgItem(ev.hWnd, ID_CB_AGC_TH),  1);
+		::EnableWindow(GetDlgItem(ev.hWnd, ID_SLIDER_ATT), 0);
+		::EnableWindow(GetDlgItem(ev.hWnd, ID_ST_ATT),     0);
+		::EnableWindow(GetDlgItem(ev.hWnd, ID_ST_ATT_VAL), 0);
+		::EnableWindow(GetDlgItem(ev.hWnd, ID_ST_ATT_DB),  0);
+	} else {
+		::EnableWindow(GetDlgItem(ev.hWnd, ID_CB_AGC_TH),  0);
+		::EnableWindow(GetDlgItem(ev.hWnd, ID_SLIDER_ATT), 1);
+		::EnableWindow(GetDlgItem(ev.hWnd, ID_ST_ATT),     1);
+		::EnableWindow(GetDlgItem(ev.hWnd, ID_ST_ATT_VAL), 1);
+		::EnableWindow(GetDlgItem(ev.hWnd, ID_ST_ATT_DB),  1);
+	}
+}
 
 bool AirSpyHfCtrlGui::OnWmUser(int n, const GuiEvent& ev)
 {
@@ -242,16 +286,16 @@ bool AirSpyHfCtrlGui::ComboBoxSelChange(const GuiEvent &ev)
 {
 	if (ev.id == ID_COMBO_SR) {
 		char buf[128] = {0};
-		
+
 		// recover the item of combo box that has been clicked
 		int sel = ComboBox_GetCurSel(GetDlgItem(ev.hWnd, ID_COMBO_SR));
 		ComboBox_GetLBText(GetDlgItem(ev.hWnd, ID_COMBO_SR), sel, buf);
 		LOGT("event.id: %d item #%d [%s] selected in SR combo\n", ev.id, sel, buf );
-		
+
 		int nsr;
 		if (sscanf (buf, "%d", &nsr) == 1 && pr_) pr_->setSampleRateHW(nsr);
 		cfg_->set<C_SR,int>(nsr);
-		
+
 		return true;
 	}
 	if (ev.id == ID_COMBO_DEVLIST && on_init_ == false) {
@@ -353,5 +397,43 @@ bool AirSpyHfCtrlGui::ButtonClick(const GuiEvent &ev)
 		}
 		return true;
 	} else
+	// LNA check box
+	if ( ev.id == ID_CB_LNA )  {
+		int lna = (IsDlgButtonChecked(ev.hWnd, ID_CB_LNA) == BST_CHECKED) ? 1 : 0;
+		LOGT("New LNA value: %d\n", lna);
+		if (pr_) pr_->set_lna(lna);
+		cfg_->set< C_LNA, int>(lna);
+		return true;
+	} else
+	// AGC check box
+	if ( ev.id == ID_CB_AGC )  {
+		int agc = (IsDlgButtonChecked(ev.hWnd, ID_CB_AGC) == BST_CHECKED) ? 1 : 0;
+		LOGT("New AGC value: %d\n", agc);
+		if (pr_) pr_->set_agc(agc);
+		cfg_->set< C_AGC, int>(agc);
+		RefreshHfControls();
+		return true;
+	} else
+	// AGC check box
+	if ( ev.id == ID_CB_AGC_TH )  {
+		int agc_th = (IsDlgButtonChecked(ev.hWnd, ID_CB_AGC_TH) == BST_CHECKED) ? 1 : 0;
+		LOGT("New AGC THRESHOLD value: %d\n", agc_th);
+		if (pr_) pr_->set_agc_threshold(agc_th);
+		cfg_->set< C_AGC_TH, int>(agc_th);
+		return true;
+	} else
 	return false;
+}
+bool  AirSpyHfCtrlGui::OnHScroll(const GuiEventHScroll& ev)
+{
+	if (GetDlgItem(ev.hWnd, ID_SLIDER_ATT) == ev.hwndCtl) {
+		DWORD newPos = SendMessage(GetDlgItem(ev.hWnd, ID_SLIDER_ATT), TBM_GETPOS, 0, 0);
+		int att_db = newPos*6;
+		DlgItemPrint( GuiEvent (GetDlgItem(ev.hWnd, ID_ST_ATT_VAL), 0), "%d", att_db);
+		LOGT("New ATT CONTROL position: %d value in dB: %d\n", newPos, att_db);
+		if (pr_) pr_->set_attenuator (att_db);
+		cfg_->set<C_ATTEN,int>(att_db);
+		return true;
+	} else
+		return false;
 }

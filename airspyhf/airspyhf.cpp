@@ -37,7 +37,11 @@ AirSpyHfRadio::AirSpyHfRadio (const char *sn):
 	bl_(0),
 	n_sr_(0),
 	srs_(0),
-	ppb_cal_(0)
+	ppb_cal_(0),
+	lna_(1),
+	agc_(1),
+	agc_threshold_(0),
+	att_(0)
 {
 	if (sn)
 		strcpy (serial, sn), strupr(serial);
@@ -264,6 +268,10 @@ int AirSpyHfRadio::get_frequency ()
     return f_;
 }
 
+bool AirSpyHfRadio::hf ()
+{
+    return (f_ <= 40000000);
+}
 
 int AirSpyHfRadio::callback(airspyhf_transfer_t* transfer)
 {
@@ -294,18 +302,7 @@ int AirSpyHfRadio::callback(airspyhf_transfer_t* transfer)
 	return 0;
 }
 
-const char* AirSpyHfRadio::board_id_name ()
-{
-	#if 0
-	uint8_t bid;
-	if (::airspyhf_board_id_read(device, &bid) == AIRSPYHF_SUCCESS)
-			return ::airspyhf_board_id_name((airspyhf_board_id)bid);
-	else
-	#endif
-	return "AirSpyHf board";
-}
-
-const char* AirSpyHfRadio::version_string ()
+const char* AirSpyHfRadio::firmware_version_string ()
 {
 	::memset (version, 0, sizeof(version));
 	#if 1
@@ -365,3 +362,43 @@ int AirSpyHfRadio::set_user_output(airspyhf_user_output_t pin, airspyhf_user_out
 		return -1;
 	}
 }
+
+int AirSpyHfRadio::set_lna(unsigned v)
+{
+	if (device && ::airspyhf_set_hf_lna(device, lna_ = v) == AIRSPYHF_SUCCESS) {
+		LOGT("airspyhf_set_hf_lna: (%d)\n", lna_);
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
+int AirSpyHfRadio::set_agc(unsigned v)
+{
+	if (device && ::airspyhf_set_hf_agc(device, agc_ = v) == AIRSPYHF_SUCCESS) {
+		LOGT("airspyhf_set_hf_agc: (%d)\n", agc_);
+		return 0;
+	} else {
+		return -1;
+	}
+}
+int AirSpyHfRadio::set_agc_threshold(unsigned v)
+{
+	if (device && ::airspyhf_set_hf_agc_threshold(device, agc_threshold_ = v) == AIRSPYHF_SUCCESS) {
+		LOGT("airspyhf_set_hf_agc_threshold: (%d)\n", agc_threshold_);
+		return 0;
+	} else {
+		return -1;
+	}
+}
+int AirSpyHfRadio::set_attenuator(unsigned v)
+{
+	att_ = v;
+	if (device && ::airspyhf_set_hf_att(device, att_/6) == AIRSPYHF_SUCCESS) {
+		LOGT("airspyhf_set_hf_attenuator: %d(%d)\n", v, att_/6);
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
