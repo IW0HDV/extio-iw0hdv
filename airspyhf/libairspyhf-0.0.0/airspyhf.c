@@ -1089,7 +1089,7 @@ int ADDCALL airspyhf_set_freq(airspyhf_device_t* device, const uint32_t freq_hz)
 	const int if_shift = 5000;
 	const uint32_t lo_low_khz = 200;
 
-	unsigned int result;
+	int result;
 	uint8_t buf[4];
 	
 	uint32_t adjusted_freq_hz = (uint32_t) ((int64_t) freq_hz * (int64_t) (1000000000LL + device->calibration_ppb) / 1000000000LL);
@@ -1108,11 +1108,11 @@ int ADDCALL airspyhf_set_freq(airspyhf_device_t* device, const uint32_t freq_hz)
 			AIRSPYHF_SET_FREQ,
 			0,
 			0,
-			(unsigned char*)&buf,
+			(unsigned char *)&buf,
 			sizeof(buf),
 			0);
 
-		if (result < sizeof(buf))
+		if (result < (int)sizeof(buf))
 		{
 			return AIRSPYHF_ERROR;
 		}
@@ -1128,7 +1128,7 @@ int ADDCALL airspyhf_set_freq(airspyhf_device_t* device, const uint32_t freq_hz)
 
 static int airspyhf_config_write(airspyhf_device_t* device, uint8_t *buffer, uint16_t length)
 {
-	unsigned int result;
+	int result;
 	uint8_t buf[256];
 
 	memset(buf, 0, sizeof(buf));
@@ -1145,7 +1145,7 @@ static int airspyhf_config_write(airspyhf_device_t* device, uint8_t *buffer, uin
 		sizeof(buf),
 		0);
 
-	if (result < sizeof(buf))
+	if (result < (int)sizeof(buf))
 	{
 		return AIRSPYHF_ERROR;
 	}
@@ -1156,7 +1156,7 @@ static int airspyhf_config_write(airspyhf_device_t* device, uint8_t *buffer, uin
 static int airspyhf_config_read(airspyhf_device_t* device, uint8_t *buffer, uint16_t length)
 {
 	uint8_t buf[256];
-	unsigned int result;
+	int result;
 
 	result = libusb_control_transfer(
 		device->usb_device,
@@ -1170,7 +1170,7 @@ static int airspyhf_config_read(airspyhf_device_t* device, uint8_t *buffer, uint
 
 	memcpy(buffer, buf, MIN(length, sizeof(buf)));
 
-	if (result < sizeof(buf))
+	if (result < (int)sizeof(buf))
 	{
 		return AIRSPYHF_ERROR;
 	}
