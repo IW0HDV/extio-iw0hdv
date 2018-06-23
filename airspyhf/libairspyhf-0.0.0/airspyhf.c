@@ -65,8 +65,7 @@ typedef int bool;
 
 #define CALIBRATION_MAGIC (0xA5CA71B0)
 
-#define ERASE_FLASH_MAGIC0 (0xC0DE)
-#define ERASE_FLASH_MAGIC1 (0xBABE)
+#define DEFAULT_IF_SHIFT (5000)
 
 #define STR_PREFIX_SERIAL_AIRSPYHF_SIZE (12)
 static const char str_prefix_serial_airspyhf[STR_PREFIX_SERIAL_AIRSPYHF_SIZE] =
@@ -532,8 +531,6 @@ static void airspyhf_open_exit(airspyhf_device_t* device)
 	device->usb_context = NULL;
 }
 
-// commented out in order to avoid compiler warning IW0HDV 7/1/2018
-#if 0
 static void upper_string(unsigned char *string, size_t len)
 {
 	while (len > 0)
@@ -546,7 +543,6 @@ static void upper_string(unsigned char *string, size_t len)
 		len--;
 	}
 }
-#endif
 
 static int airspyhf_read_samplerates_from_fw(airspyhf_device_t* device, uint32_t* buffer, const uint32_t len)
 {
@@ -1086,15 +1082,14 @@ int ADDCALL airspyhf_stop(airspyhf_device_t* device)
 int ADDCALL airspyhf_set_freq(airspyhf_device_t* device, const uint32_t freq_hz)
 {
 	const int tuning_alignment = 1000;
-	const int if_shift = 5000;
-	const uint32_t lo_low_khz = 200;
+	const uint32_t lo_low_khz = 300;
 
 	int result;
 	uint8_t buf[4];
-	
-	uint32_t adjusted_freq_hz = (uint32_t) ((int64_t) freq_hz * (int64_t) (1000000000LL + device->calibration_ppb) / 1000000000LL);
+	uint32_t if_shift = device->enable_dsp ? DEFAULT_IF_SHIFT : 0;
+	uint32_t adjusted_freq_hz = (uint32_t) ((int64_t) freq_hz * (int64_t)(1000000000LL + device->calibration_ppb) / 1000000000LL);
 	uint32_t freq_khz = MAX(lo_low_khz, (adjusted_freq_hz + if_shift + tuning_alignment / 2) / tuning_alignment);
-	
+
 	if (device->freq_khz != freq_khz)
 	{
 		buf[0] = (uint8_t) ((freq_khz >> 24) & 0xff);
@@ -1108,7 +1103,7 @@ int ADDCALL airspyhf_set_freq(airspyhf_device_t* device, const uint32_t freq_hz)
 			AIRSPYHF_SET_FREQ,
 			0,
 			0,
-			(unsigned char *)&buf,
+			(unsigned char*)&buf,
 			sizeof(buf),
 			0);
 
@@ -1383,8 +1378,10 @@ int ADDCALL airspyhf_set_hf_lna(airspyhf_device_t* device, uint8_t flag)
 	return AIRSPYHF_SUCCESS;
 }
 
-int ADDCALL airspyhf_set_lib_dsp(airspyhf_device_t* device, uint8_t flag)
+int ADDCALL airspyhf_set_lib_dsp(airspyhf_device_t* device, const uint8_t flag)
 {
 	device->enable_dsp = flag;
 	return AIRSPYHF_SUCCESS;
 }
+
+//#include "special.c"
