@@ -68,13 +68,12 @@ public:
 		// convert and copy raw I/Q data from two buffers in native AirSpy format to ExtIO format
 		this->convert_iq_from_rx(i, q, ST()); // Extio type selection is done at compile type !
 
-		// housekeeping: increase internal buffers counter
-		if ((cnt % 1024) == 0) { LOGT("---------- buflen: %d\n", ns); cnt++; }
+		//if ((cnt % 1024) == 0) { LOGT("---------- buflen: %d\n", ns); }
 
 		// send data to client SDR program
 		(*pExtioCallback) (ns, 0, 0., (int *) this->pb );
 
-		cnt++; // housekeeping
+		cnt++; // housekeeping: increase internal buffers counter
 		return 0;
 	}
 	
