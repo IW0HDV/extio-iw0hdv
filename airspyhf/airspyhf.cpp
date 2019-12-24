@@ -60,14 +60,14 @@ int AirSpyHfRadio::scan_devices (const char ***dev_list)
 {
 	if (ndev_ == 0) {
 		// get device list length
-		unsigned int nd = airspyhf_list_devices(0, 0);
+		unsigned int nd = ::airspyhf_list_devices(0, 0);
 
 	  if (nd > 0) {
 			ndev_ = nd;
 			LOGT("# of device(s): %d\n", nd);
 			serials_ = new uint64_t [nd];
 			ser_strings_ = new char * [nd];
-			airspyhf_list_devices(serials_, nd);
+			::airspyhf_list_devices(serials_, nd);
 			for (unsigned int i=0; i < nd; ++i) {
 				char b[256];
 				snprintf (b, sizeof(b), "%llX", serials_[i]);
@@ -155,10 +155,10 @@ int AirSpyHfRadio::open ()
 				x = (ch - 'A') + 10;
 			s = (s << 4) | x;
 		}
-		result = airspyhf_open_sn(&device, s);
+		result = ::airspyhf_open_sn(&device, s);
 		LOGT("airspyhf_open(): [%s] (%llX)\n", serial, s);
 	} else {
-		result = airspyhf_open(&device);
+		result = ::airspyhf_open(&device);
 		LOGT("airspyhf_open(): generic open: %d\n", result);
 		if( result == AIRSPYHF_SUCCESS )
 			result = strlen(get_serial_from_hw ()) == 0 ? AIRSPYHF_ERROR: AIRSPYHF_SUCCESS;

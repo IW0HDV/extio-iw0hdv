@@ -55,7 +55,7 @@ typedef int bool;
 #define MAX(a,b) ((a) > (b) ? a : b)
 #define MIN(a,b) ((a) < (b) ? a : b)
 
-#define SAMPLES_TO_TRANSFER (1024 * 16)
+#define SAMPLES_TO_TRANSFER (1024 * 2)
 #define SERIAL_NUMBER_UNUSED (0)
 #define RAW_BUFFER_COUNT (8)
 #define AIRSPYHF_SERIAL_SIZE (28)
@@ -66,16 +66,16 @@ typedef int bool;
 #define CALIBRATION_MAGIC (0xA5CA71B0)
 
 #define DEFAULT_IF_SHIFT (5000)
+#define MIN_ZERO_IF_LO (180)
+#define MIN_LOW_IF_LO (84)
 
 #define STR_PREFIX_SERIAL_AIRSPYHF_SIZE (12)
 static const char str_prefix_serial_airspyhf[STR_PREFIX_SERIAL_AIRSPYHF_SIZE] =
 { 'A', 'I', 'R', 'S', 'P', 'Y', 'H', 'F', ' ', 'S', 'N', ':' };
 
-#ifdef AIRSPYHF_BIG_ENDIAN
-#define TO_LE(x) __builtin_bswap32(x)
-#else
-#define TO_LE(x) x
-#endif
+#define INITIAL_PHASE (0.00006f)
+#define INITIAL_AMPLITUDE (-0.0045f)
+
 
 #pragma pack(push,1)
 
@@ -86,7 +86,7 @@ typedef struct {
 
 #pragma pack(pop)
 
-struct airspyhf_device
+typedef struct airspyhf_device
 {
 	libusb_context* usb_context;
 	libusb_device_handle* usb_device;
@@ -98,14 +98,18 @@ struct airspyhf_device
 	pthread_mutex_t consumer_mp;
 	uint32_t supported_samplerate_count;
 	uint32_t *supported_samplerates;
+	uint8_t *samplerate_architectures;
 	volatile uint32_t current_samplerate;
 	volatile uint32_t freq_hz;
 	volatile uint32_t freq_khz;
 	volatile int32_t freq_shift;
 	volatile int32_t calibration_ppb;
+	volatile float optimal_point;
 	uint8_t enable_dsp;
+	uint8_t is_low_if;
+	float filter_gain;
 	airspyhf_complex_float_t vec;
-	iq_balancer_t iq_balancer;
+	struct iq_balancer_t *iq_balancer;
 	uint32_t transfer_count;
 	uint32_t buffer_size;
 	uint32_t dropped_buffers;
@@ -118,7 +122,7 @@ struct airspyhf_device
 	volatile int received_buffer_count;
 	airspyhf_complex_float_t *output_buffer;
 	void* ctx;
-};
+} airspyhf_device_t;
 
 typedef struct calibration_record
 {
@@ -295,30 +299,45 @@ static void convert_samples(airspyhf_device_t* device, airspyhf_complex_int16_t 
 	const float scale = 1.0f / 32768;
 
 	int i;
-	airspyhf_complex_float_t vec = device->vec;
+	airspyhf_complex_float_t vec;
 	airspyhf_complex_float_t rot;
-	double angle = 2.0 * M_PI * device->freq_shift / (double) device->current_samplerate;
+	double angle;
+	float conversion_gain;
 
-	rot.re = (float) cos(angle);
-	rot.im = (float) -sin(angle);
+	conversion_gain = scale * device->filter_gain;
 
 	for (i = 0; i < count; i++)
 	{
-		dest[i].re = src[i].re * scale;
-		dest[i].im = src[i].im * scale;
+		dest[i].re = src[i].re * conversion_gain;
+		dest[i].im = src[i].im * conversion_gain;
 	}
 
 	if (device->enable_dsp)
 	{
-		iq_balancer_process(&device->iq_balancer, dest, count);
-
-		for (i = 0; i < count; i++)
+		if (!device->is_low_if)
 		{
-			rotate_complex(&vec, &rot);
-			multiply_complex_complex(&dest[i], &vec);
+			// Zero IF requires external IQ correction
+			iq_balancer_process(device->iq_balancer, dest, count);
 		}
 
-		device->vec = vec;
+		// Fine tuning
+		if (device->freq_shift != 0)
+		{
+			angle = 2.0 * M_PI * device->freq_shift / (double) device->current_samplerate;
+
+			vec = device->vec;
+
+			rot.re = (float) cos(angle);
+			rot.im = (float) -sin(angle);
+
+			for (i = 0; i < count; i++)
+			{
+				rotate_complex(&vec, &rot);
+				multiply_complex_complex(&dest[i], &vec);
+			}
+
+			device->vec = vec;
+		}
 	}
 }
 
@@ -564,6 +583,28 @@ static int airspyhf_read_samplerates_from_fw(airspyhf_device_t* device, uint32_t
 	{
 		return AIRSPYHF_ERROR;
 	}
+	return AIRSPYHF_SUCCESS;
+}
+
+static int airspyhf_read_samplerate_architectures_from_fw(airspyhf_device_t* device, uint8_t* buffer, const uint32_t len)
+{
+	int result;
+
+	result = libusb_control_transfer(
+		device->usb_device,
+		LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
+		AIRSPYHF_GET_SAMPLERATE_ARCHITECTURES,
+		0,
+		len,
+		(unsigned char*) buffer,
+		(len > 0 ? len : 1) * (int16_t) sizeof(uint32_t),
+		0);
+
+	if (result < 1)
+	{
+		return AIRSPYHF_ERROR;
+	}
+
 	return AIRSPYHF_SUCCESS;
 }
 
@@ -844,26 +885,46 @@ static int airspyhf_open_init(airspyhf_device_t** device, uint64_t serial_number
 	lib_device->streaming = false;
 	lib_device->stop_requested = false;
 
+	lib_device->supported_samplerates = NULL;
+	lib_device->samplerate_architectures = NULL;
+
+
 	result = airspyhf_read_samplerates_from_fw(lib_device, &lib_device->supported_samplerate_count, 0);
 	if (result == AIRSPYHF_SUCCESS)
 	{
 		lib_device->supported_samplerates = (uint32_t *)malloc(lib_device->supported_samplerate_count * sizeof(uint32_t));
 		result = airspyhf_read_samplerates_from_fw(lib_device, lib_device->supported_samplerates, lib_device->supported_samplerate_count);
-		if (result != AIRSPYHF_SUCCESS)
+		if (result == AIRSPYHF_SUCCESS)
+		{
+			lib_device->samplerate_architectures = (uint8_t *)malloc(lib_device->supported_samplerate_count * sizeof(uint8_t));
+			result = airspyhf_read_samplerate_architectures_from_fw(lib_device, lib_device->samplerate_architectures, lib_device->supported_samplerate_count);
+			if (result != AIRSPYHF_SUCCESS)
+			{
+				memset(lib_device->samplerate_architectures, 0, lib_device->supported_samplerate_count * sizeof(uint8_t)); // Asume Zero IF for all
+				result = AIRSPYHF_SUCCESS; // Clear this error for backward compatibility.
+			}
+		}
+		else
 		{
 			free(lib_device->supported_samplerates);
 			lib_device->supported_samplerates = NULL;
 		}
 	}
 
-	if (result != AIRSPYHF_SUCCESS)
+		if (result != AIRSPYHF_SUCCESS)
 	{
+		// Assume one default sample rate with Zero IF
+
 		lib_device->supported_samplerate_count = 1;
 		lib_device->supported_samplerates = (uint32_t *) malloc(lib_device->supported_samplerate_count * sizeof(uint32_t));
 		lib_device->supported_samplerates[0] = DEFAULT_SAMPLERATE;
+
+		lib_device->samplerate_architectures = (uint8_t *) malloc(lib_device->supported_samplerate_count * sizeof(uint8_t));
+		lib_device->samplerate_architectures[0] = 0;
 	}
 
 	lib_device->current_samplerate = lib_device->supported_samplerates[0];
+	lib_device->is_low_if = lib_device->samplerate_architectures[0];
 	
 	result = allocate_transfers(lib_device);
 	if (result != 0)
@@ -881,6 +942,8 @@ static int airspyhf_open_init(airspyhf_device_t** device, uint64_t serial_number
 	lib_device->freq_shift = 0;
 	lib_device->vec.re = 1.0f;
 	lib_device->vec.im = 0.0f;
+	lib_device->optimal_point = 0.0f;
+	lib_device->filter_gain = 1.0f;
 	lib_device->enable_dsp = 1;
 
 	if (airspyhf_config_read(lib_device, (uint8_t *) &record, sizeof(record)) == AIRSPYHF_SUCCESS)
@@ -899,7 +962,8 @@ static int airspyhf_open_init(airspyhf_device_t** device, uint64_t serial_number
 		lib_device->calibration_ppb = 0;
 	}
 
-	iq_balancer_init(&lib_device->iq_balancer);
+	
+	lib_device->iq_balancer = iq_balancer_create(INITIAL_PHASE, INITIAL_AMPLITUDE);
 
 	*device = lib_device;
 
@@ -945,10 +1009,23 @@ int ADDCALL airspyhf_close(airspyhf_device_t* device)
 		airspyhf_open_exit(device);
 		free_transfers(device);
 		free(device->supported_samplerates);
+		free(device->samplerate_architectures);
+		iq_balancer_destroy(device->iq_balancer);
 		free(device);
 	}
 
 	return result;
+}
+
+int ADDCALL airspyhf_get_output_size(airspyhf_device_t * device)
+{
+	// Todo: Make this configurable
+	return SAMPLES_TO_TRANSFER;
+}
+
+int ADDCALL airspyhf_is_low_if(airspyhf_device_t* device)
+{
+	return device->is_low_if;
 }
 
 int ADDCALL airspyhf_get_samplerates(airspyhf_device_t* device, uint32_t* buffer, const uint32_t len)
@@ -973,6 +1050,7 @@ int ADDCALL airspyhf_set_samplerate(airspyhf_device_t* device, uint32_t samplera
 {
 	int result;
 	uint32_t i;
+	uint8_t gain;
 
 	if (samplerate > MAX_SAMPLERATE_INDEX)
 	{
@@ -991,7 +1069,36 @@ int ADDCALL airspyhf_set_samplerate(airspyhf_device_t* device, uint32_t samplera
 		return AIRSPYHF_ERROR;
 	}
 
+	device->current_samplerate = device->supported_samplerates[samplerate];
+	device->is_low_if = device->samplerate_architectures[samplerate];
+
 	libusb_clear_halt(device->usb_device, LIBUSB_ENDPOINT_IN | 1);
+
+	if (!device->is_low_if && device->freq_khz < MIN_ZERO_IF_LO)
+	{
+		uint8_t buf[4];
+		buf[0] = (uint8_t)((MIN_ZERO_IF_LO >> 24) & 0xff);
+		buf[1] = (uint8_t)((MIN_ZERO_IF_LO >> 16) & 0xff);
+		buf[2] = (uint8_t)((MIN_ZERO_IF_LO >> 8) & 0xff);
+		buf[3] = (uint8_t)((MIN_ZERO_IF_LO) & 0xff);
+
+		result = libusb_control_transfer(
+			device->usb_device,
+			LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
+			AIRSPYHF_SET_FREQ,
+			0,
+			0,
+			(unsigned char*) &buf,
+			sizeof(buf),
+			0);
+
+		if (result < (int)sizeof(buf))
+		{
+			return AIRSPYHF_ERROR;
+		}
+
+		device->freq_khz = MIN_ZERO_IF_LO;
+	}
 
 	result = libusb_control_transfer(
 		device->usb_device,
@@ -1009,7 +1116,26 @@ int ADDCALL airspyhf_set_samplerate(airspyhf_device_t* device, uint32_t samplera
 		return AIRSPYHF_ERROR;
 	}
 
-	device->current_samplerate = device->supported_samplerates[samplerate];
+	result = libusb_control_transfer(
+		device->usb_device,
+		LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
+		AIRSPYHF_GET_FILTER_GAIN,
+		0,
+		0,
+		&gain,
+		sizeof(uint8_t),
+		0);
+
+	if (result == sizeof(uint8_t))
+	{
+		device->filter_gain = powf(10.0f, (float) gain * -0.05f);
+	}
+	else
+	{
+		device->filter_gain = 1.0;
+	}
+
+	airspyhf_set_freq(device, device->freq_hz);
 	
 	return AIRSPYHF_SUCCESS;
 }
@@ -1044,7 +1170,6 @@ int ADDCALL airspyhf_start(airspyhf_device_t* device, airspyhf_sample_block_cb_f
 
 	device->vec.re = 1.0f;
 	device->vec.im = 0.0f;
-	iq_balancer_init(&device->iq_balancer);
 
 	result = airspyhf_set_receiver_mode(device, RECEIVER_MODE_OFF);
 	if (result != AIRSPYHF_SUCCESS)
@@ -1074,6 +1199,7 @@ int ADDCALL airspyhf_stop(airspyhf_device_t* device)
 	int result1, result2;
 	result1 = kill_io_threads(device);
 	result2 = airspyhf_set_receiver_mode(device, RECEIVER_MODE_OFF);
+
 	if (result2 != AIRSPYHF_SUCCESS)
 	{
 		return result2;
@@ -1084,11 +1210,11 @@ int ADDCALL airspyhf_stop(airspyhf_device_t* device)
 int ADDCALL airspyhf_set_freq(airspyhf_device_t* device, const uint32_t freq_hz)
 {
 	const int tuning_alignment = 1000;
-	const uint32_t lo_low_khz = 300;
 
 	int result;
 	uint8_t buf[4];
-	uint32_t if_shift = device->enable_dsp ? DEFAULT_IF_SHIFT : 0;
+	uint32_t lo_low_khz = device->is_low_if ? MIN_LOW_IF_LO : MIN_ZERO_IF_LO;
+	uint32_t if_shift = (device->enable_dsp && !device->is_low_if) ? DEFAULT_IF_SHIFT : 0;
 	uint32_t adjusted_freq_hz = (uint32_t) ((int64_t) freq_hz * (int64_t)(1000000000LL + device->calibration_ppb) / 1000000000LL);
 	uint32_t freq_khz = MAX(lo_low_khz, (adjusted_freq_hz + if_shift + tuning_alignment / 2) / tuning_alignment);
 
@@ -1105,9 +1231,11 @@ int ADDCALL airspyhf_set_freq(airspyhf_device_t* device, const uint32_t freq_hz)
 			AIRSPYHF_SET_FREQ,
 			0,
 			0,
-			(unsigned char*)&buf,
+			(unsigned char*) &buf,
 			sizeof(buf),
 			0);
+
+		iq_balancer_set_optimal_point(device->iq_balancer, device->optimal_point);
 
 		if (result < (int)sizeof(buf))
 		{
@@ -1192,6 +1320,11 @@ int ADDCALL airspyhf_flash_calibration(airspyhf_device_t* device)
 	record.magic_number = CALIBRATION_MAGIC;
 	record.calibration_ppb = device->calibration_ppb;
 
+	if (airspyhf_is_streaming(device))
+	{
+		return AIRSPYHF_ERROR;
+	}
+
 	if (airspyhf_config_write(device, (uint8_t *)&record, sizeof(record)) != AIRSPYHF_SUCCESS)
 	{
 		return AIRSPYHF_ERROR;
@@ -1208,7 +1341,14 @@ int ADDCALL airspyhf_set_calibration(airspyhf_device_t* device, int32_t ppb)
 
 int ADDCALL airspyhf_set_optimal_iq_correction_point(airspyhf_device_t* device, float w)
 {
-	iq_balancer_set_optimal_point(&device->iq_balancer, w);
+	device->optimal_point = w;
+	iq_balancer_set_optimal_point(device->iq_balancer, device->optimal_point);
+	return AIRSPYHF_SUCCESS;
+}
+
+int ADDCALL airspyhf_iq_balancer_configure(airspyhf_device_t* device, int buffers_to_skip, int fft_integration, int fft_overlap, int correlation_integration)
+{
+	iq_balancer_configure(device->iq_balancer, buffers_to_skip, fft_integration, fft_overlap, correlation_integration);
 	return AIRSPYHF_SUCCESS;
 }
 

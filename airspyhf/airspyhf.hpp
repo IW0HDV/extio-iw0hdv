@@ -81,7 +81,7 @@ protected:
 	
 //private:
 public:
-	struct airspyhf_device* device;
+	airspyhf_device_t* device;
 	uint64_t serial_number_val;
   char     serial[128];
   // callback buffer	

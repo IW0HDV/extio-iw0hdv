@@ -78,11 +78,11 @@ set_property(TARGET extio_airspyhf_cmake_mgw PROPERTY LINK_SEARCH_START_STATIC 1
 #target_link_libraries(extio_perseus_cmake_mgw ws2_32 )
 #target_link_libraries(extio_perseus_cmake_mgw iphlpapi)
 
-target_link_libraries(extio_airspyhf_cmake_mgw ${AIRSPYHF_LIBRARY} ${LIBUSB10_LIBRARY}    )
+target_link_libraries(extio_airspyhf_cmake_mgw m ${AIRSPYHF_LIBRARY} ${LIBUSB10_LIBRARY} )
 set_target_properties(extio_airspyhf_cmake_mgw
                       PROPERTIES
-											PREFIX "" # remove the trailing standard 'lib' prefix
-											OUTPUT_NAME "extio_airspyhf_cmake_mgw-${VERSION}"
+			PREFIX "" # remove the trailing standard 'lib' prefix
+			OUTPUT_NAME "extio_airspyhf_cmake_mgw-${VERSION}"
                       )
 ###########################################################################
 
@@ -97,6 +97,7 @@ GENERATE_EXPORT_HEADER( extio_airspyhf_cmake_mgw
              EXPORT_FILE_NAME MyLibrary_Export.h
              STATIC_DEFINE extio_airspyhf_cmake_mgw_BUILT_AS_STATIC
 )
+
 
 #
 # copy in selected locations 
